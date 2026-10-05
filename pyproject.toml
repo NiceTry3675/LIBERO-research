@@ -1,0 +1,50 @@
+[project]
+name = "branchlab"
+version = "0.1.0"
+description = "Branching experiments on LIBERO: does failure risk suffice for choosing an intervention?"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    # LIBERO itself (cloned by scripts/setup.sh, installed editable)
+    "libero",
+    # Simulation stack. LIBERO pins robosuite 1.4.0 / numpy 1.22, which have no
+    # Python 3.11 wheels; these are the closest versions that do.
+    "robosuite==1.4.1",
+    "mujoco==3.2.3",
+    "numpy>=1.26,<2",
+    "bddl==1.0.1",
+    "future",  # undeclared bddl dependency
+    # Imported by libero.libero (envs, benchmark, utils)
+    "torch>=2.2",
+    "gym==0.25.2",
+    "easydict",
+    "pyyaml",
+    "cloudpickle",
+    "h5py",
+    "imageio",
+    "matplotlib",
+    "opencv-python",
+    "termcolor",
+    "tqdm",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/branchlab"]
+
+[tool.uv]
+# LIBERO's top-level `libero/` has no __init__.py, so a PEP 660 editable
+# install exposes nothing. Compat mode puts the repo root on sys.path instead.
+config-settings-package = { libero = { editable_mode = "compat" } }
+
+[tool.uv.sources]
+libero = { path = "third_party/LIBERO", editable = true }
+# torch is only used by LIBERO to load init states; CPU wheels are enough.
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
