@@ -4,7 +4,7 @@ from enum import Enum
 
 import numpy as np
 
-from branchlab.perception import Percept
+from branchlab.perception import Belief, Percept
 
 OPEN, CLOSE = -1.0, 1.0
 
@@ -37,16 +37,18 @@ class ExecutorConfig:
 @dataclass
 class ExecutorState:
     phase: Phase = Phase.REACH
-    phase_steps: int = 0
+    phase_steps: int = 0  # 0 means the phase was just entered
     retries: int = 0
-    last_seen: dict = field(default_factory=dict)  # object name -> last perceived position
+    belief: Belief = field(default_factory=Belief)
 
 
 class PickPlaceExecutor:
-    """Scripted pick-and-place that acts only on a Percept.
+    """Scripted pick-and-place that acts only on Percepts.
 
-    When an object is not perceived it keeps using its last perceived
-    position, so "continue" means carrying on with a possibly stale belief.
+    Object positions come from the belief, which changes only when a percept
+    carries a look. Between looks, and when an object goes undetected, the
+    executor keeps using the last reported position, so "continue" means
+    carrying on with a possibly stale or wrong belief.
     """
 
     def __init__(self, obj: str, dest: str, config: ExecutorConfig = None, seed: int = 0):
@@ -71,15 +73,23 @@ class PickPlaceExecutor:
         return self.state.phase in (Phase.DONE, Phase.FAILED)
 
     def act(self, percept: Percept) -> np.ndarray:
+        self.perceive(percept)
+        return self.command(percept)
+
+    def perceive(self, percept: Percept):
+        self.state.belief.update(percept)
+
+    def command(self, percept: Percept) -> np.ndarray:
         cfg, s = self.config, self.state
-        s.last_seen.update(percept.objects)
         s.phase_steps += 1
 
-        obj = s.last_seen.get(self.obj)
-        dest = s.last_seen.get(self.dest)
+        obj = s.belief.pos(self.obj)
+        dest = s.belief.pos(self.dest)
         ee = percept.ee_pos
 
         if s.phase == Phase.REACH:
+            if obj is None:
+                return self._wait(OPEN)
             target = np.array([obj[0], obj[1], cfg.hover_z])
             if self._reached(ee, target):
                 self._enter(Phase.DESCEND)
@@ -109,6 +119,8 @@ class PickPlaceExecutor:
             if percept.gripper_width <= cfg.held_min_width:  # dropped on the way
                 self._retry()
                 return self._hold(OPEN)
+            if dest is None:
+                return self._wait(CLOSE)
             target = np.array([dest[0], dest[1], cfg.hover_z])
             if self._reached(ee, target):
                 self._enter(Phase.RELEASE)
@@ -130,11 +142,19 @@ class PickPlaceExecutor:
         self.state.retries += 1
         self._enter(Phase.FAILED if self.state.retries > self.config.max_retries else Phase.REACH)
 
-    def _reached(self, ee, target):
+    def _timed_out(self):
         if self.state.phase_steps > self.config.phase_timeout:
             self._retry()
-            return False
-        return np.linalg.norm(target - ee) < self.config.pos_tol
+            return True
+        return False
+
+    def _reached(self, ee, target):
+        return not self._timed_out() and np.linalg.norm(target - ee) < self.config.pos_tol
+
+    def _wait(self, grip):
+        """Hold still because a needed object has never been seen."""
+        self._timed_out()
+        return self._hold(grip)
 
     def _move(self, ee, target, grip):
         delta = np.clip(self.config.gain * (target - ee), -1, 1)
@@ -144,12 +164,3 @@ class PickPlaceExecutor:
 
     def _hold(self, grip):
         return np.concatenate([np.zeros(6), [grip]])
-
-
-def run_episode(env, executor: PickPlaceExecutor, observe, max_steps: int = 600):
-    """Run until the executor finishes, the task succeeds, or max_steps."""
-    for step in range(max_steps):
-        if executor.finished:
-            break
-        env.step(executor.act(observe(env)))
-    return bool(env.check_success()), step + 1
