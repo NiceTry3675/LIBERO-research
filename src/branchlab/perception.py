@@ -88,8 +88,17 @@ class PerceptionModel:
     def proprio(self, env) -> Percept:
         return Percept(*_proprio(env))
 
-    def look(self, env) -> Percept:
+    def reseed(self, seed):
+        self.rng = np.random.default_rng(seed)
+
+    def look(self, env, camera: str = None) -> Percept:
+        """Detect objects from `camera` (default: the main fixed camera).
+
+        Injected faults belong to the main camera's detector; a look from any
+        other camera is subject only to noise and visibility.
+        """
         cfg = self.config
+        camera = camera or cfg.camera
         ee_pos, width = _proprio(env)
         truth = _true_objects(env)
 
@@ -97,8 +106,10 @@ class PerceptionModel:
         for name, pos in truth.items():
             missed = self.rng.random() < cfg.miss_prob
             jitter = self.rng.normal(0.0, cfg.pos_noise, 2)
-            if not missed and visible_fraction(env, name, cfg.camera) >= cfg.min_visible:
+            if not missed and visible_fraction(env, name, camera) >= cfg.min_visible:
                 detections[name] = pos + np.array([jitter[0], jitter[1], 0.0])
+        if camera != cfg.camera:
+            return Percept(ee_pos, width, detections)
 
         for fault in self.faults:
             if fault.kind == "miss":

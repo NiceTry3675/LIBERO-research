@@ -27,7 +27,8 @@ uv run python scripts/smoke_test.py
 - `src/branchlab/events.py`, `scenarios.py`: 외부 사건(물체 이동)과, 증상은 같고 원인은 다른 방해 상황
 - `src/branchlab/executor.py`: 믿음과 고유감각만 보고 움직이는 스크립트 집기·놓기 실행기
 - `src/branchlab/facts.py`: 믿음과 실행 상태를 이름 붙은 사실 목록(텍스트)으로 변환
-- `src/branchlab/runner.py`: 에피소드 실행. 판단 시점(단계 전환, 진행 정체)에만 물체를 관측
-- `scripts/`: 설치, 스모크 테스트, 실행기 평가(`eval_executor.py`), 사실 목록 출력(`show_facts.py`), 원인별 방해 상황 실행(`run_scenarios.py`)
+- `src/branchlab/runner.py`: 에피소드 실행(`Session`). 판단 시점(단계 전환, 진행 정체)에만 물체를 관측하고, 판단 시점에서 멈춰 스냅숏·복원할 수 있음
+- `src/branchlab/interventions.py`: 네 개입(계속 실행, 재관측, 국소 복구, 재계획)
+- `scripts/`: 설치, 스모크 테스트, 실행기 평가(`eval_executor.py`), 사실 목록 출력(`show_facts.py`), 원인별 방해 상황 실행(`run_scenarios.py`), 분기 실험 파일럿(`pilot.py`)과 집계(`analyze_pilot.py`)
 - `third_party/LIBERO`: LIBERO 원본 (git 추적 제외)
 - `.libero/config.yaml`: LIBERO 경로 설정 (`~/.libero` 대신 프로젝트 안에 둠)

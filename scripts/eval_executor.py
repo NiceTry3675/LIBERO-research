@@ -11,8 +11,7 @@ import numpy as np
 from branchlab.env import load_init_states, make_env, reset_to
 from branchlab.executor import ExecutorConfig, PickPlaceExecutor
 from branchlab.perception import PerceptionConfig, PerceptionModel
-from branchlab.runner import run_episode
-from branchlab.snapshot import restore, snapshot
+from branchlab.runner import Session, run_episode
 
 SUITE, TASK = "libero_object", 0
 OBJ, DEST = "alphabet_soup_1", "basket_1"
@@ -53,16 +52,17 @@ def main():
 
     # Snapshot mid-descent, finish, restore, finish again
     reset_to(env, init_states[0])
-    executor = PickPlaceExecutor(OBJ, DEST, exec_config, seed=0)
-    perception = PerceptionModel(perc_config, seed=0)
-    run_episode(env, executor, perception, max_steps=40)
-    saved = snapshot(env), executor.get_state(), perception.get_state()
-    run_episode(env, executor, perception)
+    session = Session(
+        env,
+        PickPlaceExecutor(OBJ, DEST, exec_config, seed=0),
+        PerceptionModel(perc_config, seed=0),
+    )
+    session.run(max_steps=40)
+    saved = session.snapshot()
+    session.run()
     final_a = env.get_sim_state().copy()
-    restore(env, saved[0])
-    executor.set_state(saved[1])
-    perception.set_state(saved[2])
-    run_episode(env, executor, perception)
+    session.restore(saved)
+    session.run()
     diff = np.abs(final_a - env.get_sim_state()).max()
     print(f"restore: max |state diff| at episode end = {diff:.3e}")
     assert diff == 0, "restored episode diverged from the original"

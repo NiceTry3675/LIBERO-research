@@ -1,6 +1,7 @@
 import copy
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Optional
 
 import numpy as np
 
@@ -10,6 +11,7 @@ OPEN, CLOSE = -1.0, 1.0
 
 
 class Phase(str, Enum):
+    SEARCH = "search"  # visit waypoints and look down with the wrist camera
     REACH = "reach"  # move above the object
     DESCEND = "descend"
     GRASP = "grasp"  # close the gripper
@@ -32,6 +34,8 @@ class ExecutorConfig:
     phase_timeout: int = 150
     max_retries: int = 2
     action_noise: float = 0.0  # std of Gaussian noise on the translation command
+    wrist_camera: str = "robot0_eye_in_hand"
+    wrist_look_steps: int = 10  # time to take one deliberate wrist-camera look
 
 
 @dataclass
@@ -40,6 +44,10 @@ class ExecutorState:
     phase_steps: int = 0  # 0 means the phase was just entered
     retries: int = 0
     belief: Belief = field(default_factory=Belief)
+    look_camera: Optional[str] = None  # request for a look from this camera at the next step
+    waypoints: list = field(default_factory=list)  # search: floor points still to visit
+    search_stage: str = "move"  # search: "move" -> "wait" -> "looked"
+    search_steps: int = 0  # search: steps spent in the current stage
 
 
 class PickPlaceExecutor:
@@ -67,10 +75,25 @@ class PickPlaceExecutor:
         self.state = copy.deepcopy(state)
         self.rng.bit_generator.state = copy.deepcopy(rng_state)
 
+    def reseed(self, seed):
+        self.rng = np.random.default_rng(seed)
+
     # --- control ----------------------------------------------------------
     @property
     def finished(self):
         return self.state.phase in (Phase.DONE, Phase.FAILED)
+
+    def start_search(self, waypoints):
+        """Abandon the current step and look for the object at each waypoint in turn."""
+        s = self.state
+        s.waypoints = [np.asarray(w, dtype=float) for w in waypoints]
+        s.search_stage, s.search_steps = "move", 0
+        self._enter(Phase.SEARCH)
+
+    def hold_action(self) -> np.ndarray:
+        """Stay still, keeping hold of whatever is in the gripper."""
+        closed = self.state.phase in (Phase.GRASP, Phase.LIFT, Phase.TRANSPORT)
+        return self._hold(CLOSE if closed else OPEN)
 
     def act(self, percept: Percept) -> np.ndarray:
         self.perceive(percept)
@@ -86,6 +109,9 @@ class PickPlaceExecutor:
         obj = s.belief.pos(self.obj)
         dest = s.belief.pos(self.dest)
         ee = percept.ee_pos
+
+        if s.phase == Phase.SEARCH:
+            return self._search(ee)
 
         if s.phase == Phase.REACH:
             if obj is None:
@@ -131,6 +157,31 @@ class PickPlaceExecutor:
                 self._enter(Phase.DONE)
             return self._hold(OPEN)
 
+        return self._hold(OPEN)
+
+    def _search(self, ee):
+        cfg, s = self.config, self.state
+        s.search_steps += 1
+        if s.search_stage == "looked":  # the wrist look requested last step is now in the belief
+            track = s.belief.tracks.get(self.obj)
+            if track is not None and track.seen_step == s.belief.step:
+                self._enter(Phase.REACH)
+            else:
+                s.waypoints.pop(0)
+                s.search_stage, s.search_steps = "move", 0
+                if not s.waypoints:
+                    self._enter(Phase.FAILED)
+        elif s.search_stage == "wait":
+            if s.search_steps >= cfg.wrist_look_steps:
+                s.look_camera = cfg.wrist_camera
+                s.search_stage = "looked"
+        else:
+            target = np.array([s.waypoints[0][0], s.waypoints[0][1], cfg.hover_z])
+            arrived = np.linalg.norm(target - ee) < cfg.pos_tol
+            if arrived or s.search_steps > cfg.phase_timeout:
+                s.search_stage, s.search_steps = "wait", 0
+            else:
+                return self._move(ee, target, OPEN)
         return self._hold(OPEN)
 
     # --- helpers ----------------------------------------------------------
