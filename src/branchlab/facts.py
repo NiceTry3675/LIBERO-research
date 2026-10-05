@@ -17,7 +17,7 @@ CONTROL_HZ = 20
 class FactConfig:
     moved_small: float = 0.02  # m between two looks; below this counts as not moved
     moved_large: float = 0.08
-    near_radius: float = 0.10
+    near_radius: float = 0.12
     dest_radius: float = 0.07  # footprint of the destination container
     recent_seconds: float = 3.0
     stall_steps: int = 80  # steps in one phase before it counts as stalled
@@ -59,6 +59,10 @@ def build_facts(executor: PickPlaceExecutor, percept: Percept, config: FactConfi
         d = _xy_dist(track.pos, track.prev_pos)
         return "none" if d < cfg.moved_small else "small" if d < cfg.moved_large else "large"
 
+    def just_moved(name):
+        track = belief.tracks[name]
+        return track.seen_step == belief.step and moved(track) in ("small", "large")
+
     if percept.gripper_width > cfg.open_width:
         gripper = "open"
     elif percept.gripper_width > executor.config.held_min_width:
@@ -81,6 +85,7 @@ def build_facts(executor: PickPlaceExecutor, percept: Percept, config: FactConfi
         n for n, p in others.items()
         if dest is not None and _xy_dist(p, dest.pos) < cfg.dest_radius
     )
+    moved_others = sorted(n for n in others if just_moved(n))
     target_in_dest = (
         target is not None and dest is not None and gripper != "holding"
         and _xy_dist(target.pos, dest.pos) < cfg.dest_radius
@@ -110,6 +115,7 @@ def build_facts(executor: PickPlaceExecutor, percept: Percept, config: FactConfi
         "target_region": _region(target.pos) if target is not None else "unknown",
         "target_in_destination": target_in_dest,
         "objects_near_target": near_target,
+        "other_objects_moved": moved_others,
         "destination_detected": executor.dest in belief.detected,
         "destination_region": _region(dest.pos) if dest is not None else "unknown",
         "objects_in_destination": in_dest,

@@ -31,17 +31,21 @@ def run_episode(
     max_steps: int = 600,
     fact_config: FactConfig = None,
     on_decision=None,
+    on_step=None,
 ) -> Episode:
     """Run until the executor finishes or max_steps.
 
     The agent looks at objects only at decision points; in between it acts on
-    proprioception and its belief. `on_decision(step, facts)` is called at each
-    decision point before the executor acts on it.
+    proprioception and its belief. `on_decision(decision)` is called at each
+    decision point before the executor acts on it; `on_step(step)` is called at
+    the start of every step, which is where external events are triggered.
     """
     fact_config = fact_config or FactConfig()
     decisions = []
     step = 0
     while step < max_steps and not executor.finished:
+        if on_step is not None:
+            on_step(step)
         if is_decision_point(executor, fact_config):
             percept = perception.look(env)
             executor.perceive(percept)

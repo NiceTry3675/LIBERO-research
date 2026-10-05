@@ -4,6 +4,8 @@ from typing import Optional
 
 import numpy as np
 
+from branchlab.visibility import visible_fraction
+
 
 @dataclass
 class Percept:
@@ -45,6 +47,8 @@ def observe(env) -> Percept:
 class PerceptionConfig:
     pos_noise: float = 0.0  # std (m) of per-look xy jitter on each detection
     miss_prob: float = 0.0  # per-look chance of dropping each object
+    camera: str = "agentview"  # objects are detected only if this camera sees them
+    min_visible: float = 0.2  # fraction of the object's facing surface that must be in sight
 
 
 @dataclass
@@ -93,7 +97,7 @@ class PerceptionModel:
         for name, pos in truth.items():
             missed = self.rng.random() < cfg.miss_prob
             jitter = self.rng.normal(0.0, cfg.pos_noise, 2)
-            if not missed:
+            if not missed and visible_fraction(env, name, cfg.camera) >= cfg.min_visible:
                 detections[name] = pos + np.array([jitter[0], jitter[1], 0.0])
 
         for fault in self.faults:

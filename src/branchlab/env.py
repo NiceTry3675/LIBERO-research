@@ -42,3 +42,9 @@ def reset_to(env, init_state, settle_steps: int = 10):
     idle = [0.0] * 6 + [-1.0]
     for _ in range(settle_steps):
         env.step(idle)
+
+
+def render(env, camera: str = "agentview", size: int = 256):
+    """RGB frame from a camera, flipped to the usual top-left origin."""
+    env.env.sim.forward()
+    return env.env.sim.render(camera_name=camera, height=size, width=size)[::-1]
