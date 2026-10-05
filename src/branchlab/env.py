@@ -33,3 +33,12 @@ def make_env(suite: str, task_id: int, image_size: int = 256, **kwargs):
         **kwargs,
     )
     return env, task
+
+
+def reset_to(env, init_state, settle_steps: int = 10):
+    """Load a LIBERO init state and let the objects settle with the arm idle."""
+    env.reset()
+    env.set_init_state(init_state)
+    idle = [0.0] * 6 + [-1.0]
+    for _ in range(settle_steps):
+        env.step(idle)

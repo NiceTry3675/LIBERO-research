@@ -22,6 +22,8 @@ uv run python scripts/smoke_test.py
 
 - `src/branchlab/env.py`: 과제 환경 생성, 초기 상태 로드
 - `src/branchlab/snapshot.py`: 상태 저장·복원 (MuJoCo 상태 + 그리퍼·컨트롤러 내부 상태)
-- `scripts/`: 설치, 스모크 테스트
+- `src/branchlab/perception.py`: 실행기가 보는 관측(`Percept`). 지금은 시뮬레이터 정답값 그대로
+- `src/branchlab/executor.py`: 관측만 보고 움직이는 스크립트 집기·놓기 실행기
+- `scripts/`: 설치, 스모크 테스트, 실행기 평가(`eval_executor.py`)
 - `third_party/LIBERO`: LIBERO 원본 (git 추적 제외)
 - `.libero/config.yaml`: LIBERO 경로 설정 (`~/.libero` 대신 프로젝트 안에 둠)
