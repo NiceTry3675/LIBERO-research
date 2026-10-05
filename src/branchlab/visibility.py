@@ -16,6 +16,11 @@ def _raw(env):
     return sim.model._model, sim.data._data
 
 
+def _rendered_groups(env):
+    """Geom groups the offscreen renderer draws (robosuite hides collision geoms)."""
+    return np.array(env.env.sim._render_context_offscreen.vopt.geomgroup, dtype=np.uint8)
+
+
 def _in_view(model, data, cam_id, points):
     """Which world points project inside the camera image (square aspect)."""
     rel = (points - data.cam_xpos[cam_id]) @ data.cam_xmat[cam_id].reshape(3, 3)
@@ -73,13 +78,17 @@ def _surface_points(model, data, root, origin, n_points=300):
     return tri[:, 0] + a[:, None] * (tri[:, 1] - tri[:, 0]) + b[:, None] * (tri[:, 2] - tri[:, 0])
 
 
-def _occluded(model, data, origin, direction, max_dist, own_body, robot_roots):
-    """Whether something other than the robot or the object itself blocks the ray."""
+def _occluded(model, data, origin, direction, max_dist, own_body, robot_roots, groups):
+    """Whether something other than the robot or the object itself blocks the ray.
+
+    Only geoms in the rendered `groups` count, so that what blocks a ray is
+    exactly what would cover the object in the image.
+    """
     geomid = np.zeros(1, dtype=np.int32)
     travelled = 0.0
     pnt = origin
     for _ in range(50):  # each iteration skips one robot geom
-        dist = mujoco.mj_ray(model, data, pnt, direction, None, 1, own_body, geomid)
+        dist = mujoco.mj_ray(model, data, pnt, direction, groups, 1, own_body, geomid)
         if geomid[0] < 0 or travelled + dist >= max_dist:
             return False
         if model.body_rootid[model.geom_bodyid[geomid[0]]] not in robot_roots:
@@ -102,6 +111,7 @@ def visible_fraction(env, name: str, camera: str = "agentview") -> float:
     robot_roots = {
         r for r in set(model.body_rootid) if model.body(r).name.startswith(_ROBOT_PREFIXES)
     }
+    groups = _rendered_groups(env)
 
     points = _surface_points(model, data, model.body_rootid[body], origin)
     total = len(points)
@@ -111,7 +121,7 @@ def visible_fraction(env, name: str, camera: str = "agentview") -> float:
     directions = to_points / dists[:, None]
     # mj_multiRay would be faster but misses geoms here (checked against mj_ray).
     visible = sum(
-        not _occluded(model, data, origin, directions[i], dists[i], body, robot_roots)
+        not _occluded(model, data, origin, directions[i], dists[i], body, robot_roots, groups)
         for i in range(len(points))
     )
     return visible / total

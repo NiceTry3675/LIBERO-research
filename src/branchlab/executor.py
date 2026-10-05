@@ -139,6 +139,8 @@ class PickPlaceExecutor:
                     self._enter(Phase.TRANSPORT)
                 else:
                     self._retry()
+            else:
+                self._timed_out()
             return self._move(ee, target, CLOSE)
 
         if s.phase == Phase.TRANSPORT:
