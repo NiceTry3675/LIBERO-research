@@ -1,6 +1,6 @@
 # branchlab
 
-LIBERO 분기 실험 환경. 연구 내용은 [구상서_v5.md](구상서_v5.md) 참고.
+LIBERO 분기 실험 환경. 연구 내용은 [구상서_v6.md](구상서_v6.md) 참고. 이전 판은 [구상서_v5.md](구상서_v5.md).
 
 ## 설치
 
@@ -33,6 +33,11 @@ LIBERO-Object 3번 과제 "바비큐 소스를 집어 바구니에 넣기"를 �
 - `src/branchlab/facts.py`: 믿음과 실행 상태를 이름 붙은 사실 목록(텍스트)으로 변환
 - `src/branchlab/runner.py`: 에피소드 실행(`Session`). 판단 시점(단계 전환, 진행 정체)에만 물체를 관측하고, 판단 시점에서 멈춰 스냅숏·복원할 수 있음
 - `src/branchlab/interventions.py`: 네 개입(계속 실행, 재관측, 국소 복구, 재계획)과 단계적 확대
-- `scripts/`: 설치, 스모크 테스트, 실행기 평가(`eval_executor.py`), 사실 목록 출력(`show_facts.py`), 원인별 방해 상황 실행(`run_scenarios.py`), 분기 실험 파일럿(`pilot.py`)과 집계(`analyze_pilot.py`)
+- `src/branchlab/clef.py`: 결정 모델 Clef 호출기. Cloudflare Workers AI 직접 또는 OpenRouter 경유, 응답 캐시
+- `src/branchlab/vlm.py`: 생성형 VLM 호출기(OpenRouter). Clef와 같은 질문을 JSON 답으로 받는다. Gemini는 BYOK가 걸린 Vertex로 고정
+- `scripts/`: 설치, 스모크 테스트, 실행기 평가(`eval_executor.py`), 사실 목록 출력(`show_facts.py`), 원인별 방해 상황 실행(`run_scenarios.py`), 분기 실험 파일럿(`pilot.py`)과 집계(`analyze_pilot.py`), RoboDawn 시연으로 하는 Clef 오프라인 시험(`clef_offline.py`, `clef_servo_offline.py`)
+- `colab/robotwin/`: Colab GPU에서 RoboTwin 2.0을 설치하고 돌리는 스크립트 (WSL2에서는 렌더링이 안 됨)
+- `reports/`: 파일럿 보고서와 Clef 오프라인 실험 보고서
 - `third_party/LIBERO`: LIBERO 원본 (git 추적 제외)
+- `third_party/robodawn`: RoboDawn 저장소 일부 사본, RoboTwin 시연 데이터와 하네스 (git 추적 제외)
 - `.libero/config.yaml`: LIBERO 경로 설정 (`~/.libero` 대신 프로젝트 안에 둠)
