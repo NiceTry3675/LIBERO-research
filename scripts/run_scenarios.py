@@ -15,9 +15,8 @@ from branchlab.executor import PickPlaceExecutor
 from branchlab.facts import render_facts
 from branchlab.perception import PerceptionConfig, PerceptionModel
 from branchlab.runner import run_episode
-from branchlab.scenarios import CAUSES, Scenario, setup_layout, trigger
+from branchlab.scenarios import CAUSES, SUITE, TASK_ID, Scenario, due, setup_layout, trigger
 
-SUITE, TASK = "libero_object", 0
 SHOWN = ("step", "target_detected", "target_last_seen", "objects_near_target",
          "other_objects_moved", "mismatch")
 
@@ -30,7 +29,7 @@ def run(env, init_state, scenario, pos_noise, seed):
     log = {"record": None, "symptom": None, "frame": None}
 
     def on_step(step):
-        if step == scenario.event_step:
+        if log["record"] is None and due(scenario, step, executor):
             log["record"] = trigger(env, perception, scenario)
 
     def on_decision(decision):
@@ -51,9 +50,9 @@ def main():
     parser.add_argument("--seeds", type=int, default=5)
     args = parser.parse_args()
 
-    env, _ = make_env(SUITE, TASK, use_camera_obs=False)
+    env, _ = make_env(SUITE, TASK_ID, use_camera_obs=False)
     env.seed(0)
-    init_state = load_init_states(SUITE, TASK)[0]
+    init_state = load_init_states(SUITE, TASK_ID)[0]
     out_dir = PROJECT_ROOT / "outputs" / "scenarios"
     out_dir.mkdir(parents=True, exist_ok=True)
 

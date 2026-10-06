@@ -12,9 +12,8 @@ from branchlab.env import load_init_states, make_env, reset_to
 from branchlab.executor import ExecutorConfig, PickPlaceExecutor
 from branchlab.perception import PerceptionConfig, PerceptionModel
 from branchlab.runner import Session, run_episode
+from branchlab.scenarios import DEST, SUITE, TARGET, TASK_ID
 
-SUITE, TASK = "libero_object", 0
-OBJ, DEST = "alphabet_soup_1", "basket_1"
 
 
 def main():
@@ -26,9 +25,9 @@ def main():
     parser.add_argument("--max-states", type=int, default=None)
     args = parser.parse_args()
 
-    env, task = make_env(SUITE, TASK, use_camera_obs=False)
+    env, task = make_env(SUITE, TASK_ID, use_camera_obs=False)
     env.seed(0)
-    init_states = load_init_states(SUITE, TASK)[: args.max_states]
+    init_states = load_init_states(SUITE, TASK_ID)[: args.max_states]
     exec_config = ExecutorConfig(action_noise=args.action_noise)
     perc_config = PerceptionConfig(pos_noise=args.pos_noise, miss_prob=args.miss_prob)
     print(
@@ -40,7 +39,7 @@ def main():
     for init_state in init_states:
         for seed in range(args.seeds):
             reset_to(env, init_state)
-            executor = PickPlaceExecutor(OBJ, DEST, exec_config, seed=seed)
+            executor = PickPlaceExecutor(TARGET, DEST, exec_config, seed=seed)
             perception = PerceptionModel(perc_config, seed=seed)
             episode = run_episode(env, executor, perception)
             results.append((episode.success, episode.steps, executor.state.retries))
@@ -54,7 +53,7 @@ def main():
     reset_to(env, init_states[0])
     session = Session(
         env,
-        PickPlaceExecutor(OBJ, DEST, exec_config, seed=0),
+        PickPlaceExecutor(TARGET, DEST, exec_config, seed=0),
         PerceptionModel(perc_config, seed=0),
     )
     session.run(max_steps=40)

@@ -79,8 +79,8 @@ class Session:
             self.executor.perceive(self.percept)
         self._observed = True
 
-    def run(self, max_steps: int = 600, on_decision=None, on_step=None, until=None):
-        """Run until the executor finishes or max_steps.
+    def run(self, max_steps: int = 600, on_decision=None, on_step=None, until=None, stop=None):
+        """Run until the executor finishes, max_steps, or `stop()` becomes true.
 
         `on_step(step)` is called at the start of every step, which is where
         external events are triggered; `on_decision(decision)` at each decision
@@ -89,6 +89,8 @@ class Session:
         decision; calling run() again carries on from that point.
         """
         while self.step < max_steps and not self.executor.finished:
+            if stop is not None and stop():
+                return None
             if not self._observed:
                 if on_step is not None:
                     on_step(self.step)

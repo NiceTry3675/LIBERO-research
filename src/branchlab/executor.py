@@ -17,7 +17,8 @@ class Phase(str, Enum):
     GRASP = "grasp"  # close the gripper
     LIFT = "lift"
     TRANSPORT = "transport"  # move above the destination
-    RELEASE = "release"
+    PLACE = "place"  # lower the object into the destination
+    RELEASE = "release"  # open the gripper and let the object settle
     DONE = "done"
     FAILED = "failed"  # gave up after max_retries
 
@@ -27,9 +28,11 @@ class ExecutorConfig:
     hover_z: float = 0.32  # travel height of the end effector
     grasp_dz: float = 0.02  # end-effector height relative to the object origin when grasping
     pos_tol: float = 0.01
+    grasp_tol: float = 0.004  # tighter tolerance for the grasp pose
+    place_z: float = 0.25  # end-effector height for letting go over the destination
     gain: float = 10.0  # normalized action per metre of error
     grasp_steps: int = 15
-    release_steps: int = 15
+    release_steps: int = 30
     held_min_width: float = 0.01  # fingers wider than this after closing = holding something
     phase_timeout: int = 150
     max_retries: int = 2
@@ -48,15 +51,21 @@ class ExecutorState:
     waypoints: list = field(default_factory=list)  # search: floor points still to visit
     search_stage: str = "move"  # search: "move" -> "wait" -> "looked"
     search_steps: int = 0  # search: steps spent in the current stage
+    confirm_camera: Optional[str] = None  # camera that confirms the target before descending
+    entered_at: int = 0  # belief step at which the current phase was entered
+    committed: bool = False  # descend: the target was confirmed, keep going
 
 
 class PickPlaceExecutor:
     """Scripted pick-and-place that acts only on Percepts.
 
     Object positions come from the belief, which changes only when a percept
-    carries a look. Between looks, and when an object goes undetected, the
-    executor keeps using the last reported position, so "continue" means
-    carrying on with a possibly stale or wrong belief.
+    carries a look. Between looks the executor moves on the last reported
+    position, but it never grasps blind: before descending it needs a look,
+    made after it arrived above the object, that reports the object. Until
+    then it holds still. By default it relies on the main camera's scheduled
+    looks (on entering a step, and when a step stalls); after a search it
+    confirms with deliberate wrist-camera looks instead.
     """
 
     def __init__(self, obj: str, dest: str, config: ExecutorConfig = None, seed: int = 0):
@@ -88,11 +97,12 @@ class PickPlaceExecutor:
         s = self.state
         s.waypoints = [np.asarray(w, dtype=float) for w in waypoints]
         s.search_stage, s.search_steps = "move", 0
+        s.confirm_camera = self.config.wrist_camera
         self._enter(Phase.SEARCH)
 
     def hold_action(self) -> np.ndarray:
         """Stay still, keeping hold of whatever is in the gripper."""
-        closed = self.state.phase in (Phase.GRASP, Phase.LIFT, Phase.TRANSPORT)
+        closed = self.state.phase in (Phase.GRASP, Phase.LIFT, Phase.TRANSPORT, Phase.PLACE)
         return self._hold(CLOSE if closed else OPEN)
 
     def act(self, percept: Percept) -> np.ndarray:
@@ -122,8 +132,12 @@ class PickPlaceExecutor:
             return self._move(ee, target, OPEN)
 
         if s.phase == Phase.DESCEND:
+            if not s.committed:
+                s.committed = self._confirmed()
+                if not s.committed:
+                    return self._wait(OPEN)
             target = np.array([obj[0], obj[1], obj[2] + cfg.grasp_dz])
-            if self._reached(ee, target):
+            if self._reached(ee, target, cfg.grasp_tol):
                 self._enter(Phase.GRASP)
             return self._move(ee, target, OPEN)
 
@@ -143,13 +157,23 @@ class PickPlaceExecutor:
                 self._timed_out()
             return self._move(ee, target, CLOSE)
 
-        if s.phase == Phase.TRANSPORT:
+        if s.phase in (Phase.TRANSPORT, Phase.PLACE):
             if percept.gripper_width <= cfg.held_min_width:  # dropped on the way
                 self._retry()
                 return self._hold(OPEN)
+
+        if s.phase == Phase.TRANSPORT:
             if dest is None:
                 return self._wait(CLOSE)
             target = np.array([dest[0], dest[1], cfg.hover_z])
+            if self._reached(ee, target):
+                self._enter(Phase.PLACE)
+            return self._move(ee, target, CLOSE)
+
+        if s.phase == Phase.PLACE:
+            if dest is None:
+                return self._wait(CLOSE)
+            target = np.array([dest[0], dest[1], cfg.place_z])
             if self._reached(ee, target):
                 self._enter(Phase.RELEASE)
             return self._move(ee, target, CLOSE)
@@ -186,10 +210,26 @@ class PickPlaceExecutor:
                 return self._move(ee, target, OPEN)
         return self._hold(OPEN)
 
+    def _confirmed(self):
+        """Has a look made since arriving above the object reported it?
+
+        With a confirming camera set, ask for a deliberate look from it every
+        `wrist_look_steps` steps while unconfirmed.
+        """
+        cfg, s = self.config, self.state
+        b = s.belief
+        if b.look_step is not None and b.look_step > s.entered_at and self.obj in b.detected:
+            return True
+        if s.confirm_camera is not None and s.phase_steps % cfg.wrist_look_steps == 0:
+            s.look_camera = s.confirm_camera
+        return False
+
     # --- helpers ----------------------------------------------------------
     def _enter(self, phase: Phase):
         self.state.phase = phase
         self.state.phase_steps = 0
+        self.state.entered_at = self.state.belief.step
+        self.state.committed = False
 
     def _retry(self):
         self.state.retries += 1
@@ -201,11 +241,12 @@ class PickPlaceExecutor:
             return True
         return False
 
-    def _reached(self, ee, target):
-        return not self._timed_out() and np.linalg.norm(target - ee) < self.config.pos_tol
+    def _reached(self, ee, target, tol=None):
+        tol = self.config.pos_tol if tol is None else tol
+        return not self._timed_out() and np.linalg.norm(target - ee) < tol
 
     def _wait(self, grip):
-        """Hold still because a needed object has never been seen."""
+        """Hold still until a needed object is seen (or the step times out)."""
         self._timed_out()
         return self._hold(grip)
 

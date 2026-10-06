@@ -13,8 +13,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from branchlab.executor import Phase
+from branchlab.facts import build_facts
 from branchlab.perception import Percept
-from branchlab.runner import Session
+from branchlab.runner import Decision, Session
 
 INTERVENTIONS = ("continue", "reobserve", "local_recovery", "replan")
 
@@ -22,9 +24,9 @@ INTERVENTIONS = ("continue", "reobserve", "local_recovery", "replan")
 @dataclass
 class InterventionConfig:
     reobserve_looks: int = 3  # looks fused into one measurement
-    reobserve_gap: int = 5  # steps between those looks
+    reobserve_gap: int = 3  # steps between those looks
     plan_delay: int = 60  # steps spent waiting for the planner (3 s)
-    scan_x: tuple = (-0.15, 0.10)  # floor grid the scan visits
+    scan_x: tuple = (-0.15, 0.05)  # floor grid the scan visits; further out the elbow hits its limit
     scan_y: tuple = (-0.25, 0.0, 0.25)
 
 
@@ -73,3 +75,34 @@ def apply(session: Session, name: str, cfg: InterventionConfig = None):
         executor.start_search(_scan_waypoints(session.percept.ee_pos[:2], cfg))
     else:
         raise ValueError(f"unknown intervention: {name}")
+
+
+def escalate(session: Session, decision: Decision, cfg: InterventionConfig = None,
+             max_steps: int = 600) -> str:
+    """Staged escalation: try the cheapest response first and move up only when
+    it does not clear the symptom.
+
+    With no symptom at the decision point it just continues. Otherwise it
+    re-observes; if the symptom is still in the facts it does a local recovery;
+    if the wrist look does not find the object either, it replans. Returns the
+    last stage used. Nothing further is attempted once a stage has cleared the
+    symptom, even if execution fails later.
+    """
+    cfg = cfg or InterventionConfig()
+    executor = session.executor
+    symptoms = set(decision.facts["mismatch"])
+    if not symptoms:
+        return "continue"
+
+    apply(session, "reobserve", cfg)
+    facts = build_facts(executor, session.percept, session.fact_config)
+    if not symptoms & set(facts["mismatch"]):
+        return "reobserve"
+
+    apply(session, "local_recovery", cfg)
+    session.run(max_steps, stop=lambda: executor.state.phase != Phase.SEARCH)
+    if executor.state.phase != Phase.FAILED:
+        return "local_recovery"
+
+    apply(session, "replan", cfg)
+    return "replan"

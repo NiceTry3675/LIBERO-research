@@ -16,19 +16,17 @@ from branchlab.executor import PickPlaceExecutor
 from branchlab.facts import render_facts
 from branchlab.perception import Fault, PerceptionConfig, PerceptionModel, observe
 from branchlab.runner import run_episode
-
-SUITE, TASK = "libero_object", 0
-OBJ, DEST = "alphabet_soup_1", "basket_1"
+from branchlab.scenarios import DEST, OCCLUDER, SUITE, TARGET, TASK_ID
 
 
 def make_fault(kind, env, persistence):
     truth = observe(env).objects
     if kind == "miss":  # target not recognized
-        return Fault("miss", OBJ, persistence=persistence)
+        return Fault("miss", TARGET, persistence=persistence)
     if kind == "offset":  # target reported 6 cm from where it really is
-        return Fault("offset", OBJ, np.array([0.0, 0.06, 0.0]), persistence)
+        return Fault("offset", TARGET, np.array([0.0, 0.06, 0.0]), persistence)
     if kind == "ghost":  # a distractor falsely reported inside the destination
-        return Fault("ghost", "milk_1", truth[DEST] + np.array([0.02, 0.0, 0.03]), persistence)
+        return Fault("ghost", OCCLUDER, truth[DEST] + np.array([0.02, 0.0, 0.03]), persistence)
     raise ValueError(kind)
 
 
@@ -41,10 +39,10 @@ def main():
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
-    env, _ = make_env(SUITE, TASK, use_camera_obs=False)
+    env, _ = make_env(SUITE, TASK_ID, use_camera_obs=False)
     env.seed(0)
-    reset_to(env, load_init_states(SUITE, TASK)[0])
-    executor = PickPlaceExecutor(OBJ, DEST, seed=args.seed)
+    reset_to(env, load_init_states(SUITE, TASK_ID)[0])
+    executor = PickPlaceExecutor(TARGET, DEST, seed=args.seed)
     perception = PerceptionModel(PerceptionConfig(pos_noise=args.pos_noise), seed=args.seed)
 
     count = 0

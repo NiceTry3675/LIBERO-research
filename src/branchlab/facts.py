@@ -70,7 +70,7 @@ def build_facts(executor: PickPlaceExecutor, percept: Percept, config: FactConfi
     else:
         gripper = "closed_empty"
 
-    carrying = gripper == "holding" and s.phase in (Phase.LIFT, Phase.TRANSPORT, Phase.RELEASE)
+    carrying = gripper == "holding" and s.phase in (Phase.LIFT, Phase.TRANSPORT, Phase.PLACE, Phase.RELEASE)
     target_detected = executor.obj in belief.detected
     others = {
         name: t.pos
@@ -94,13 +94,14 @@ def build_facts(executor: PickPlaceExecutor, percept: Percept, config: FactConfi
     # Disagreements between what the current plan step expects and the last look
     mismatch = []
     before_grasp = s.phase in (Phase.REACH, Phase.DESCEND, Phase.GRASP)
-    if before_grasp and not target_detected:
+    needs_target = before_grasp or s.phase in (Phase.LIFT, Phase.TRANSPORT)
+    if needs_target and not target_detected:
         mismatch.append("target_missing")
     if before_grasp and target_detected and moved(target) in ("small", "large"):
         mismatch.append("target_displaced")
     if in_dest:
         mismatch.append("destination_occupied")
-    if s.phase == Phase.TRANSPORT and gripper == "closed_empty":
+    if s.phase in (Phase.TRANSPORT, Phase.PLACE) and gripper == "closed_empty":
         mismatch.append("grasp_lost")
 
     return {

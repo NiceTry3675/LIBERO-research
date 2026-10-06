@@ -1,7 +1,7 @@
 """Environment smoke test: build a LIBERO task, step it, render a camera frame,
 and check that restoring a snapshot reproduces a rollout exactly.
 
-    uv run python scripts/smoke_test.py [--suite libero_object] [--task 0]
+    uv run python scripts/smoke_test.py [--suite libero_object] [--task 3]
 """
 
 import argparse
@@ -24,7 +24,7 @@ def rollout(env, actions):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--suite", default="libero_object")
-    parser.add_argument("--task", type=int, default=0)
+    parser.add_argument("--task", type=int, default=3)
     parser.add_argument("--steps", type=int, default=100)
     args = parser.parse_args()
 
