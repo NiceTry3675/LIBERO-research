@@ -1,0 +1,126 @@
+{
+  "collected_date": "2026-10-07",
+  "timezone": "Asia/Seoul",
+  "source": "https://robodawn.top/results/#/episodes",
+  "method": "Browser UI task list, episode cards, captions, expanded Inspect and System prompt. No direct endpoint access.",
+  "stage1": {
+    "tasks": 50,
+    "episodes": 500,
+    "success": 311,
+    "failure": 189,
+    "success_first25": 152,
+    "success_last25": 159,
+    "seed_mismatches": 0,
+    "demo_entries": {
+      "1": 357,
+      "2": 143
+    },
+    "early_failures": 66,
+    "success_at45": [
+      {
+        "task": "place_object_basket",
+        "episode": 1
+      },
+      {
+        "task": "place_shoe",
+        "episode": 4
+      },
+      {
+        "task": "stack_blocks_two",
+        "episode": 8
+      }
+    ]
+  },
+  "stage2": {
+    "inspect_files": [
+      {
+        "file": "inspect/adjust_bottle__ep0__turn1.md",
+        "characters": 2337,
+        "sha256": "c28ad6eeaa175a4d7b98c61147e528c83f0b19f88df2d8e5e32b33df04f5b065",
+        "failed_commands": 0
+      },
+      {
+        "file": "inspect/adjust_bottle__ep0__turn10.md",
+        "characters": 4236,
+        "sha256": "7377934c735c0b16913d36558f17e15c6b80469e8ff3da3457834824f35a8b59",
+        "failed_commands": 1
+      },
+      {
+        "file": "inspect/adjust_bottle__ep0__turn5.md",
+        "characters": 3371,
+        "sha256": "4227d44026e1bed88547e2eec177cc72536954892fb99d839974ed81f277d149",
+        "failed_commands": 0
+      },
+      {
+        "file": "inspect/adjust_bottle__ep3__turn1.md",
+        "characters": 2503,
+        "sha256": "bf45a2461fb956783b8b8d42b2a021343cc6ad9e6351be505a1fcb6a4c9128b1",
+        "failed_commands": 0
+      },
+      {
+        "file": "inspect/adjust_bottle__ep3__turn11.md",
+        "characters": 5018,
+        "sha256": "92934d12c44c5012319df7e364a0e52562ebc1dc966350c582fcc81cf3231528",
+        "failed_commands": 0
+      },
+      {
+        "file": "inspect/adjust_bottle__ep3__turn21.md",
+        "characters": 5647,
+        "sha256": "facd0ad336fab331838295cbf08ee9a33a8e9321e60c9003fe26d4805ca6e721",
+        "failed_commands": 1
+      },
+      {
+        "file": "inspect/handover_block__ep0__turn1.md",
+        "characters": 2835,
+        "sha256": "7d2173db0cc7d591af376e2712e002341cab3167233e2001b84428a827aaea84",
+        "failed_commands": 1
+      },
+      {
+        "file": "inspect/handover_block__ep0__turn12.md",
+        "characters": 4630,
+        "sha256": "bc0510b66f829e04f033dba8e148a3a616d0b32787b7fc968a8da4c63741ee01",
+        "failed_commands": 0
+      },
+      {
+        "file": "inspect/handover_block__ep0__turn20.md",
+        "characters": 5292,
+        "sha256": "dbf4f60ce6e37788c85b08726f490c66c9ffb0f9e2435f6d0f37f902034a8b67",
+        "failed_commands": 1
+      },
+      {
+        "file": "inspect/handover_block__ep0__turn24.md",
+        "characters": 5366,
+        "sha256": "5d09b686a7a43367bbd4d2fff7c3e619f9425de1bebd7ac88f5d825ec01ad801",
+        "failed_commands": 0
+      }
+    ],
+    "missing_on_display": [
+      "prompt/completion/reasoning token usage",
+      "actual latency",
+      "retry count",
+      "whether demonstration images are included in full request"
+    ],
+    "displayed_image_order": [
+      "agent_camera",
+      "top_camera",
+      "left_camera",
+      "right_camera"
+    ],
+    "system_prompts": {
+      "adjust_bottle_ep0": "inspect/system_prompt.md",
+      "handover_block_ep0": "inspect/system_prompt__handover_block.md"
+    },
+    "system_prompt_differences": "Table-height-derived values: adjust_bottle ep0 z=74; handover_block ep0 z=71. Other text matches.",
+    "reasoning_status": "Cannot determine from the displayed Inspect data."
+  },
+  "stage3": {
+    "status": "deferred",
+    "reason": "Guide requires baseline reproduction validation first; no validation result was provided."
+  },
+  "checks": {
+    "saved_csv_reloaded": true,
+    "task_episode_counts_match": true,
+    "existing_pdf_values_match": true,
+    "inspect_reply_execution_json_parse": true
+  }
+}

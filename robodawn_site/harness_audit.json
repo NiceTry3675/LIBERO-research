@@ -1,0 +1,105 @@
+{
+  "robodawn_commit": "9247f366cd31f278e10f2fbe5fe8469b5f1b5b94",
+  "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+  "checks": {
+    "seed_pairs": 500,
+    "demo_entries": 500,
+    "demo_images_loaded": true,
+    "all_user_prompts_exact": true,
+    "all_system_prompts_exact": true
+  },
+  "prompt_checks": [
+    {
+      "file": "inspect/adjust_bottle__ep0__turn1.md",
+      "exact_match": true,
+      "initial_memory_matches": true,
+      "diff": []
+    },
+    {
+      "file": "inspect/adjust_bottle__ep0__turn10.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    },
+    {
+      "file": "inspect/adjust_bottle__ep0__turn5.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    },
+    {
+      "file": "inspect/adjust_bottle__ep3__turn1.md",
+      "exact_match": true,
+      "initial_memory_matches": true,
+      "diff": []
+    },
+    {
+      "file": "inspect/adjust_bottle__ep3__turn11.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    },
+    {
+      "file": "inspect/adjust_bottle__ep3__turn21.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    },
+    {
+      "file": "inspect/handover_block__ep0__turn1.md",
+      "exact_match": true,
+      "initial_memory_matches": true,
+      "diff": []
+    },
+    {
+      "file": "inspect/handover_block__ep0__turn12.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    },
+    {
+      "file": "inspect/handover_block__ep0__turn20.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    },
+    {
+      "file": "inspect/handover_block__ep0__turn24.md",
+      "exact_match": true,
+      "initial_memory_matches": null,
+      "diff": []
+    }
+  ],
+  "system_checks": [
+    {
+      "file": "system_prompt.md",
+      "table_z": 74,
+      "exact_match": true
+    },
+    {
+      "file": "system_prompt__handover_block.md",
+      "table_z": 71,
+      "exact_match": true
+    }
+  ],
+  "request_image_range": [
+    14,
+    48
+  ],
+  "limits": [
+    "Later-turn memory and image captions were reused from Inspect; full history and camera rendering were not regenerated.",
+    "Demo directories and image bytes match the shipped bank. Selecting the entry from initial simulator object positions still requires a GPU run.",
+    "Upstream Gemini reasoning is intended to be on by default; original gateway settings and actual reasoning token counts are unavailable."
+  ],
+  "local_vlm_difference": {
+    "role": "Clef offline comparison, not the RoboDawn baseline",
+    "different_fields": [
+      "system prompt",
+      "question/choice user prompt",
+      "reply schema",
+      "reasoning effort",
+      "reply token limit",
+      "task demo and command primer context"
+    ]
+  }
+}

@@ -1,13 +1,20 @@
+set -euo pipefail
 set -x
 export MAMBA_ROOT_PREFIX=/content/mamba
 ENV=/content/mamba/envs/rt; PY=$ENV/bin/python
 cd /content
 /content/bin/micromamba install -y -q -n rt -c conda-forge gcc_linux-64=12 gxx_linux-64=12 && echo STEP_GCC_OK
-git clone -q --recurse-submodules https://github.com/RoboTwin-Platform/RoboTwin.git && echo STEP_CLONE_OK
+robotwin_commit=${ROBOTWIN_COMMIT:-96c1feab536306b50c26af200044fcdf126e8904}
+git clone -q --no-checkout https://github.com/RoboTwin-Platform/RoboTwin.git
 cd /content/RoboTwin
+git checkout -q --detach "$robotwin_commit"
+git submodule update --init --recursive
+echo "STEP_CLONE_OK $(git rev-parse HEAD)"
 grep -v -E "^torch==|^torchvision" scripts/requirements.txt > /tmp/req.txt
 $PY -m uv pip install -q --python $PY -r /tmp/req.txt toppra && echo STEP_REQ_OK
-bash scripts/update_xpolicylab.sh; $PY -m uv pip install -q --python $PY -e XPolicyLab && echo STEP_XPL_OK
+# Keep XPolicyLab at the benchmark's gitlink; update_xpolicylab.sh follows
+# origin/main and would silently change the pinned benchmark dependencies.
+$PY -m uv pip install -q --python $PY -e XPolicyLab && echo STEP_XPL_OK
 SAPIEN_LOCATION=$($PY -m pip show sapien | grep Location | awk '{print $2}')/sapien
 sed -i -E 's/("r")(\))( as)/\1, encoding="utf-8") as/g' $SAPIEN_LOCATION/wrapper/urdf_loader.py
 MPLIB_LOCATION=$($PY -m pip show mplib | grep Location | awk '{print $2}')/mplib

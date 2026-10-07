@@ -1,0 +1,5831 @@
+{
+  "robodawn_commit": "9247f366cd31f278e10f2fbe5fe8469b5f1b5b94",
+  "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+  "task_config": "demo_randomized",
+  "seed_base": 0,
+  "instruction_type": "unseen",
+  "max_turns": 45,
+  "max_commands_per_turn": 4,
+  "max_tokens": 8000,
+  "model": "google/gemini-3.8-flash",
+  "provider": {
+    "only": [
+      "google-vertex"
+    ],
+    "allow_fallbacks": false
+  },
+  "reasoning": {
+    "enabled": true
+  },
+  "cameras": [
+    "agent_camera",
+    "top_camera",
+    "wrist"
+  ],
+  "smoke_tasks": [
+    "adjust_bottle",
+    "place_empty_cup"
+  ],
+  "tasks": [
+    {
+      "task": "adjust_bottle",
+      "site_success": 7,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle",
+          "demo_seed": 100030,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle",
+          "demo_seed": 100030,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle",
+          "demo_seed": 100030,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle+2",
+          "demo_seed": 100031,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 21,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle",
+          "demo_seed": 100030,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle+2",
+          "demo_seed": 100031,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle",
+          "demo_seed": 100030,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle+2",
+          "demo_seed": 100031,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle+2",
+          "demo_seed": 100031,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/adjust_bottle+2",
+          "demo_seed": 100031,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "beat_block_hammer",
+      "site_success": 7,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 5,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 19,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 25,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/beat_block_hammer",
+          "demo_seed": 100027,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 24,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "blocks_ranking_rgb",
+      "site_success": 8,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 31,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 26,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 32,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 27,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 23,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 23,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_rgb",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 36,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "blocks_ranking_size",
+      "site_success": 7,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 28,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 31,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 40,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size",
+          "demo_seed": 100012,
+          "demo_side_key": "R",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 39,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size",
+          "demo_seed": 100012,
+          "demo_side_key": "R",
+          "request_images": 33,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 40,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/blocks_ranking_size+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 17,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "click_alarmclock",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 1,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 1,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 1,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 38,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 1,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_alarmclock+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 1,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "click_bell",
+      "site_success": 10,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_bell",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_bell",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_bell+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_bell+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_bell+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_bell",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/click_bell+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 14,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_bell",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_bell",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/click_bell",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 14,
+          "site_turns": 40,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "dump_bin_bigbin",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100032,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100019,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 17,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100020,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 5,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100033,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 15,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100023,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100027,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 32,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100029,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100038,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100041,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/dump_bin_bigbin",
+          "demo_seed": 100034,
+          "demo_side_key": "L",
+          "request_images": 21,
+          "site_turns": 17,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "grab_roller",
+      "site_success": 10,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/grab_roller",
+          "demo_seed": 100017,
+          "demo_side_key": "RR",
+          "request_images": 17,
+          "site_turns": 31,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/grab_roller+2",
+          "demo_seed": 100015,
+          "demo_side_key": "LL",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/grab_roller+2",
+          "demo_seed": 100015,
+          "demo_side_key": "LL",
+          "request_images": 17,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/grab_roller",
+          "demo_seed": 100017,
+          "demo_side_key": "RR",
+          "request_images": 17,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/grab_roller",
+          "demo_seed": 100017,
+          "demo_side_key": "RR",
+          "request_images": 17,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/grab_roller+2",
+          "demo_seed": 100015,
+          "demo_side_key": "LL",
+          "request_images": 17,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/grab_roller+2",
+          "demo_seed": 100015,
+          "demo_side_key": "LL",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/grab_roller",
+          "demo_seed": 100017,
+          "demo_side_key": "RR",
+          "request_images": 17,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/grab_roller",
+          "demo_seed": 100017,
+          "demo_side_key": "RR",
+          "request_images": 17,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/grab_roller+2",
+          "demo_seed": 100015,
+          "demo_side_key": "LL",
+          "request_images": 17,
+          "site_turns": 14,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "handover_block",
+      "site_success": 2,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 35,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_block",
+          "demo_seed": 100023,
+          "demo_side_key": "LL",
+          "request_images": 33,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "handover_mic",
+      "site_success": 7,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_mic",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_mic",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 43,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_mic",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_mic",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 13,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/handover_mic+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LL",
+          "request_images": 29,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_mic",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/handover_mic+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LL",
+          "request_images": 29,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/handover_mic",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 10,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/handover_mic+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LL",
+          "request_images": 29,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/handover_mic+2",
+          "demo_seed": 100018,
+          "demo_side_key": "LL",
+          "request_images": 29,
+          "site_turns": 10,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "hanging_mug",
+      "site_success": 1,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 20,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 34,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 19,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 10,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 14,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 4,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100018,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/hanging_mug",
+          "demo_seed": 100012,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 7,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "lift_pot",
+      "site_success": 0,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/lift_pot",
+          "demo_seed": 100039,
+          "demo_side_key": "LL",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/lift_pot",
+          "demo_seed": 100039,
+          "demo_side_key": "LL",
+          "request_images": 18,
+          "site_turns": 18,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/lift_pot",
+          "demo_seed": 100039,
+          "demo_side_key": "LL",
+          "request_images": 18,
+          "site_turns": 27,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/lift_pot+2",
+          "demo_seed": 100045,
+          "demo_side_key": "RR",
+          "request_images": 19,
+          "site_turns": 35,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100017,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/lift_pot+2",
+          "demo_seed": 100045,
+          "demo_side_key": "RR",
+          "request_images": 19,
+          "site_turns": 6,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100021,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/lift_pot",
+          "demo_seed": 100039,
+          "demo_side_key": "LL",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100022,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/lift_pot+2",
+          "demo_seed": 100045,
+          "demo_side_key": "RR",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100023,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/lift_pot+2",
+          "demo_seed": 100045,
+          "demo_side_key": "RR",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100027,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/lift_pot",
+          "demo_seed": 100039,
+          "demo_side_key": "LL",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100029,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/lift_pot+2",
+          "demo_seed": 100045,
+          "demo_side_key": "RR",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "move_can_pot",
+      "site_success": 8,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_can_pot",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 35,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_can_pot+2",
+          "demo_seed": 100021,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_can_pot",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_can_pot+2",
+          "demo_seed": 100021,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_can_pot+2",
+          "demo_seed": 100021,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_can_pot",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_can_pot",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_can_pot",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_can_pot+2",
+          "demo_seed": 100021,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_can_pot",
+          "demo_seed": 100019,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 9,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "move_pillbottle_pad",
+      "site_success": 3,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad+2",
+          "demo_seed": 100028,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 8,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad+2",
+          "demo_seed": 100028,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 29,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100011,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad+2",
+          "demo_seed": 100028,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100013,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad+2",
+          "demo_seed": 100028,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100015,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_pillbottle_pad+2",
+          "demo_seed": 100028,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "move_playingcard_away",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away+2",
+          "demo_seed": 100017,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away+2",
+          "demo_seed": 100017,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away+2",
+          "demo_seed": 100017,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_playingcard_away",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 7,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "move_stapler_pad",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 29,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 26,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 23,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/move_stapler_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 43,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "open_laptop",
+      "site_success": 3,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/open_laptop+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_laptop",
+          "demo_seed": 100015,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_laptop",
+          "demo_seed": 100015,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/open_laptop+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/open_laptop+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_laptop",
+          "demo_seed": 100015,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/open_laptop+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/open_laptop+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/open_laptop+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_laptop",
+          "demo_seed": 100015,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "open_microwave",
+      "site_success": 8,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 19,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 19,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 39,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/open_microwave",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 28,
+          "site_turns": 3,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "pick_diverse_bottles",
+      "site_success": 0,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100020,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100024,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100026,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 26,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100027,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100029,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_diverse_bottles",
+          "demo_seed": 100050,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "pick_dual_bottles",
+      "site_success": 1,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 44,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 35,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/pick_dual_bottles",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "place_a2b_left",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 30,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100005,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_left",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 10,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_a2b_right",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 20,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100014,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_a2b_right+2",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_bread_basket",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 17,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 36,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_bread_basket+2",
+          "demo_seed": 100021,
+          "demo_side_key": "RR",
+          "request_images": 24,
+          "site_turns": 9,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_bread_skillet",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 30,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 32,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 9,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 8,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100017,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 7,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100022,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100024,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 8,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100029,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100034,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 26,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100035,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_bread_skillet",
+          "demo_seed": 100042,
+          "demo_side_key": "LR",
+          "request_images": 21,
+          "site_turns": 9,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_burger_fries",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 29,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 3,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_burger_fries",
+          "demo_seed": 100013,
+          "demo_side_key": "LR",
+          "request_images": 22,
+          "site_turns": 8,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_can_basket",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 12,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 5,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_can_basket",
+          "demo_seed": 100016,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 13,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_cans_plasticbox",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 13,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 28,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 14,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 21,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_cans_plasticbox",
+          "demo_seed": 100018,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 31,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "place_container_plate",
+      "site_success": 10,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_container_plate+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_container_plate",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_container_plate+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_container_plate+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_container_plate",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_container_plate+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_container_plate",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_container_plate+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_container_plate",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_container_plate",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 8,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_dual_shoes",
+      "site_success": 3,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 27,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 21,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_dual_shoes",
+          "demo_seed": 100029,
+          "demo_side_key": "LR",
+          "request_images": 25,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "place_empty_cup",
+      "site_success": 7,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup+2",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 21,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup+2",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup+2",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 16,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_empty_cup",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 12,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_fan",
+      "site_success": 4,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_fan",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_fan+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 37,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_fan+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_fan",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 19,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_fan+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_fan",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 35,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_fan+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_fan",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 4,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_fan",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_fan",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 1,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "place_mouse_pad",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 20,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 44,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 26,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 44,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_mouse_pad",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 9,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_object_basket",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 32,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 11,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100014,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100018,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_basket",
+          "demo_seed": 100024,
+          "demo_side_key": "LR",
+          "request_images": 24,
+          "site_turns": 16,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_object_scale",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_scale",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 33,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_scale",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_scale+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_scale+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_scale",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 20,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_scale+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_scale",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_scale+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_scale",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_scale",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 32,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "place_object_stand",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_stand",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 22,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_stand+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 15,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_stand+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 28,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_stand+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 14,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_stand",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_stand+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_stand",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_object_stand+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 21,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_stand",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 28,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_object_stand",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 15,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "place_phone_stand",
+      "site_success": 4,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand+2",
+          "demo_seed": 100025,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand+2",
+          "demo_seed": 100025,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 36,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100014,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand+2",
+          "demo_seed": 100025,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100015,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 24,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100017,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100020,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100021,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_phone_stand",
+          "demo_seed": 100027,
+          "demo_side_key": "L",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "place_shoe",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_shoe+2",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 19,
+          "site_turns": 17,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_shoe",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_shoe",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_shoe",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_shoe+2",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_shoe",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 43,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_shoe",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/place_shoe",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100012,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_shoe+2",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 19,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100013,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/place_shoe+2",
+          "demo_seed": 100016,
+          "demo_side_key": "L",
+          "request_images": 19,
+          "site_turns": 32,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "press_stapler",
+      "site_success": 10,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/press_stapler",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/press_stapler",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/press_stapler+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 15,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/press_stapler+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 15,
+          "site_turns": 2,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/press_stapler+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 15,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/press_stapler+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 15,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/press_stapler",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/press_stapler",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/press_stapler+2",
+          "demo_seed": 100019,
+          "demo_side_key": "R",
+          "request_images": 15,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/press_stapler",
+          "demo_seed": 100021,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 4,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "put_bottles_dustbin",
+      "site_success": 4,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100017,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 22,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100016,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100021,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100022,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_bottles_dustbin",
+          "demo_seed": 100024,
+          "demo_side_key": "LL",
+          "request_images": 48,
+          "site_turns": 21,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "put_object_cabinet",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 11,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100026,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100049,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 20,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100055,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100056,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 5,
+          "seed": 100079,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100091,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100121,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 29,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100151,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100156,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/put_object_cabinet",
+          "demo_seed": 100093,
+          "demo_side_key": "RR",
+          "request_images": 26,
+          "site_turns": 14,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "rotate_qrcode",
+      "site_success": 5,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 36,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 28,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode+2",
+          "demo_seed": 100015,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 20,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/rotate_qrcode",
+          "demo_seed": 100018,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "scan_object",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 28,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 10,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 11,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100015,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100024,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 25,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100029,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 30,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100031,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100033,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 4,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100043,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100047,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/scan_object",
+          "demo_seed": 100049,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "shake_bottle",
+      "site_success": 10,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 2,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100013,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100014,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 16,
+          "site_turns": 5,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "shake_bottle_horizontally",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 17,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 12,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 5,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 2,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100008,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally",
+          "demo_seed": 100035,
+          "demo_side_key": "L",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100013,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 4,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100014,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/shake_bottle_horizontally+2",
+          "demo_seed": 100033,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 6,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "stack_blocks_three",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 30,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 32,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 36,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 32,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 25,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 22,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100009,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_three",
+          "demo_seed": 100019,
+          "demo_side_key": "LR",
+          "request_images": 34,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "stack_blocks_two",
+      "site_success": 9,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 19,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 26,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100003,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 37,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 10,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 20,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 45,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_blocks_two",
+          "demo_seed": 100014,
+          "demo_side_key": "LR",
+          "request_images": 26,
+          "site_turns": 21,
+          "site_outcome": "failure"
+        }
+      ]
+    },
+    {
+      "task": "stack_bowls_three",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 23,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 4,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 22,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 14,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 4,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 12,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 37,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100016,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 37,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 8,
+          "seed": 100021,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 19,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100023,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_three",
+          "demo_seed": 100031,
+          "demo_side_key": "LR",
+          "request_images": 29,
+          "site_turns": 29,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "stack_bowls_two",
+      "site_success": 8,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100001,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 15,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 2,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 3,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 3,
+          "seed": 100004,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 14,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100010,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 27,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100013,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 25,
+          "site_turns": 31,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 7,
+          "seed": 100015,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 17,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100016,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two+2",
+          "demo_seed": 100022,
+          "demo_side_key": "L",
+          "request_images": 25,
+          "site_turns": 18,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100019,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stack_bowls_two",
+          "demo_seed": 100023,
+          "demo_side_key": "LR",
+          "request_images": 23,
+          "site_turns": 13,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "stamp_seal",
+      "site_success": 8,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/stamp_seal+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 8,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 1,
+          "seed": 100004,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/stamp_seal+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stamp_seal",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 35,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/stamp_seal+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 38,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stamp_seal",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 13,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/stamp_seal+2",
+          "demo_seed": 100017,
+          "demo_side_key": "R",
+          "request_images": 17,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 6,
+          "seed": 100011,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stamp_seal",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 38,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100012,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stamp_seal",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 9,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100013,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stamp_seal",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 9,
+          "seed": 100015,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/stamp_seal",
+          "demo_seed": 100020,
+          "demo_side_key": "L",
+          "request_images": 16,
+          "site_turns": 7,
+          "site_outcome": "success"
+        }
+      ]
+    },
+    {
+      "task": "turn_switch",
+      "site_success": 6,
+      "episodes": [
+        {
+          "episode": 0,
+          "seed": 100000,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/turn_switch+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 1,
+          "seed": 100002,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/turn_switch",
+          "demo_seed": 100024,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 2,
+          "seed": 100003,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/turn_switch+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 2,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 3,
+          "seed": 100005,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/turn_switch",
+          "demo_seed": 100024,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 4,
+          "seed": 100006,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/turn_switch+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 24,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 5,
+          "seed": 100007,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/turn_switch",
+          "demo_seed": 100024,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        },
+        {
+          "episode": 6,
+          "seed": 100008,
+          "demo_entry": 1,
+          "demo_path": "demos/robotwin2/expert/turn_switch",
+          "demo_seed": 100024,
+          "demo_side_key": "L",
+          "request_images": 15,
+          "site_turns": 3,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 7,
+          "seed": 100009,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/turn_switch+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 17,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 8,
+          "seed": 100010,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/turn_switch+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 7,
+          "site_outcome": "success"
+        },
+        {
+          "episode": 9,
+          "seed": 100011,
+          "demo_entry": 2,
+          "demo_path": "demos/robotwin2/expert/turn_switch+2",
+          "demo_seed": 100023,
+          "demo_side_key": "R",
+          "request_images": 18,
+          "site_turns": 45,
+          "site_outcome": "failure"
+        }
+      ]
+    }
+  ]
+}

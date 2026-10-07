@@ -1,51 +1,51 @@
 task,site_name,success,episodes,note
-adjust_bottle,adjust bottle,7,10,PDF 2026-10-07
-beat_block_hammer,beat block hammer,7,10,PDF 2026-10-07
-blocks_ranking_rgb,blocks ranking rgb,8,10,PDF 2026-10-07
-blocks_ranking_size,blocks ranking size,7,10,PDF 2026-10-07
-click_alarmclock,click alarmclock,9,10,PDF 2026-10-07
-click_bell,click bell,10,10,PDF 2026-10-07
-dump_bin_bigbin,dump bin bigbin,6,10,PDF 2026-10-07
-grab_roller,grab roller,10,10,PDF 2026-10-07
-handover_block,handover block,2,10,PDF 2026-10-07
-handover_mic,handover mic,7,10,PDF 2026-10-07
-hanging_mug,hanging mug,1,10,PDF 2026-10-07
-lift_pot,lift pot,0,10,PDF 2026-10-07
-move_can_pot,move can pot,8,10,PDF 2026-10-07
-move_pillbottle_pad,move pillbottle pad,3,10,PDF 2026-10-07
-move_playingcard_away,move playingcard away,9,10,PDF 2026-10-07
-move_stapler_pad,move stapler pad,9,10,PDF 2026-10-07
-open_laptop,open laptop,3,10,PDF 2026-10-07
-open_microwave,open microwave,8,10,PDF 2026-10-07
-pick_diverse_bottles,pick diverse bottles,0,10,PDF 2026-10-07
-pick_dual_bottles,pick dual bottles,1,10,PDF 2026-10-07
-place_a2b_left,place a2b left,9,10,PDF 2026-10-07
-place_a2b_right,place a2b right,9,10,PDF 2026-10-07
-place_bread_basket,place bread basket,5,10,PDF 2026-10-07
-place_bread_skillet,place bread skillet,5,10,PDF 2026-10-07
-place_burger_fries,place burger fries,9,10,PDF 2026-10-07
-place_can_basket,place can basket,,,
-place_cans_plasticbox,place cans plasticbox,,,
-place_container_plate,place container plate,,,
-place_dual_shoes,place dual shoes,,,
-place_empty_cup,place empty cup,,,
-place_fan,place fan,,,
-place_mouse_pad,place mouse pad,,,
-place_object_basket,place object basket,,,
-place_object_scale,place object scale,,,
-place_object_stand,place object stand,,,
-place_phone_stand,place phone stand,,,
-place_shoe,place shoe,,,
-press_stapler,press stapler,,,
-put_bottles_dustbin,put bottles dustbin,,,
-put_object_cabinet,put object cabinet,,,
-rotate_qrcode,rotate qrcode,,,
-scan_object,scan object,,,
-shake_bottle,shake bottle,,,
-shake_bottle_horizontally,shake bottle horizontally,,,
-stack_blocks_three,stack blocks three,,,
-stack_blocks_two,stack blocks two,,,
-stack_bowls_three,stack bowls three,,,
-stack_bowls_two,stack bowls two,,,
-stamp_seal,stamp seal,,,
-turn_switch,turn switch,,,
+adjust_bottle,adjust bottle,7,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+beat_block_hammer,beat block hammer,7,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+blocks_ranking_rgb,blocks ranking rgb,8,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+blocks_ranking_size,blocks ranking size,7,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+click_alarmclock,click alarmclock,9,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+click_bell,click bell,10,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+dump_bin_bigbin,dump bin bigbin,6,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+grab_roller,grab roller,10,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+handover_block,handover block,2,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+handover_mic,handover mic,7,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+hanging_mug,hanging mug,1,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+lift_pot,lift pot,0,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+move_can_pot,move can pot,8,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+move_pillbottle_pad,move pillbottle pad,3,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+move_playingcard_away,move playingcard away,9,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+move_stapler_pad,move stapler pad,9,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+open_laptop,open laptop,3,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+open_microwave,open microwave,8,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+pick_diverse_bottles,pick diverse bottles,0,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+pick_dual_bottles,pick dual bottles,1,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+place_a2b_left,place a2b left,9,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+place_a2b_right,place a2b right,9,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+place_bread_basket,place bread basket,5,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+place_bread_skillet,place bread skillet,5,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+place_burger_fries,place burger fries,9,10,PDF 2026-10-07; 브라우저 확인 2026-10-07
+place_can_basket,place can basket,6,10,브라우저 확인 2026-10-07
+place_cans_plasticbox,place cans plasticbox,5,10,브라우저 확인 2026-10-07
+place_container_plate,place container plate,10,10,브라우저 확인 2026-10-07
+place_dual_shoes,place dual shoes,3,10,브라우저 확인 2026-10-07
+place_empty_cup,place empty cup,7,10,브라우저 확인 2026-10-07
+place_fan,place fan,4,10,브라우저 확인 2026-10-07
+place_mouse_pad,place mouse pad,5,10,브라우저 확인 2026-10-07
+place_object_basket,place object basket,5,10,브라우저 확인 2026-10-07
+place_object_scale,place object scale,5,10,브라우저 확인 2026-10-07
+place_object_stand,place object stand,6,10,브라우저 확인 2026-10-07
+place_phone_stand,place phone stand,4,10,브라우저 확인 2026-10-07
+place_shoe,place shoe,6,10,브라우저 확인 2026-10-07
+press_stapler,press stapler,10,10,브라우저 확인 2026-10-07
+put_bottles_dustbin,put bottles dustbin,4,10,브라우저 확인 2026-10-07
+put_object_cabinet,put object cabinet,6,10,브라우저 확인 2026-10-07
+rotate_qrcode,rotate qrcode,5,10,브라우저 확인 2026-10-07
+scan_object,scan object,6,10,브라우저 확인 2026-10-07
+shake_bottle,shake bottle,10,10,브라우저 확인 2026-10-07
+shake_bottle_horizontally,shake bottle horizontally,9,10,브라우저 확인 2026-10-07
+stack_blocks_three,stack blocks three,6,10,브라우저 확인 2026-10-07
+stack_blocks_two,stack blocks two,9,10,브라우저 확인 2026-10-07
+stack_bowls_three,stack bowls three,6,10,브라우저 확인 2026-10-07
+stack_bowls_two,stack bowls two,8,10,브라우저 확인 2026-10-07
+stamp_seal,stamp seal,8,10,브라우저 확인 2026-10-07
+turn_switch,turn switch,6,10,브라우저 확인 2026-10-07
