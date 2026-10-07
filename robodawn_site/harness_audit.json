@@ -89,7 +89,7 @@
   "limits": [
     "Later-turn memory and image captions were reused from Inspect; full history and camera rendering were not regenerated.",
     "Demo directories and image bytes match the shipped bank. Selecting the entry from initial simulator object positions still requires a GPU run.",
-    "Upstream Gemini reasoning is intended to be on by default; original gateway settings and actual reasoning token counts are unavailable."
+    "Upstream sends no reasoning fields for Gemini and relies on the default thinking; the original gateway and its reasoning token counts are unpublished."
   ],
   "local_vlm_difference": {
     "role": "Clef offline comparison, not the RoboDawn baseline",

@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
@@ -17,38 +17,84 @@ from harness.agent.llm_client import ChatClient
 class BaselineTests(unittest.TestCase):
     def args(self,**changes):
         fields = dict(repo=ROOT/"third_party/robodawn",manifest=ROOT/"robodawn_site/reproduction_manifest.json",
-                      task="adjust_bottle",episodes=1,start_episode=0,output=None,api_key_file=None,
-                      no_video=False,robotwin_root=Path("/content/RoboTwin"))
+                      task="adjust_bottle",episodes=1,start_episode=0,output=None,credentials=None,
+                      no_video=False,tier="flex",robotwin_root=Path("/content/RoboTwin"))
         fields.update(changes)
         return argparse.Namespace(**fields)
 
-    def test_vertex_routing_cannot_be_overridden(self):
-        client = baseline.openrouter_client(ChatClient)(model=baseline.MODEL,base_url=baseline.API_BASE,
-            api_key="fake-secret",max_tokens=8000,extra_body={"provider":{"only":["google-ai-studio"]},
-                                                           "reasoning":{"effort":"none"}})
-        body = client._body([{"role":"system","content":"unchanged prompt"}])
-        self.assertEqual(body["provider"],baseline.PROVIDER)
-        self.assertEqual(body["reasoning"],{"enabled":True})
-        self.assertEqual(body["messages"][0]["content"],"unchanged prompt")
-        self.assertEqual(body["max_tokens"],8000)
+    def client(self,tier="flex",**kwargs):
+        credentials = MagicMock(valid=True,token="fake-token")
+        with patch("google.oauth2.service_account.Credentials.from_service_account_file",return_value=credentials):
+            return baseline.vertex_client(ChatClient,Path("key.json"),tier)(model=baseline.MODEL,
+                base_url=baseline.api_base("demo-project"),api_key=None,max_tokens=8000,**kwargs)
+
+    MESSAGES = [{"role":"system","content":"unchanged prompt"},
+                {"role":"user","content":[{"type":"image_url","image_url":{"url":"data:image/png;base64,AAAA"}},
+                                          {"type":"text","text":"demo"}]},
+                {"role":"assistant","content":"Understood."},
+                {"role":"user","content":[{"type":"text","text":"TURN 1."}]}]
+
+    def test_native_request_keeps_text_images_and_settings(self):
+        body = self.client()._body(self.MESSAGES)
+        self.assertEqual(set(body),{"model","messages","max_tokens","temperature"})
+        native = baseline.to_native(body)
+        self.assertEqual(native["systemInstruction"],{"parts":[{"text":"unchanged prompt"}]})
+        self.assertEqual([c["role"] for c in native["contents"]],["user","model","user"])
+        self.assertEqual(native["contents"][0]["parts"],[{"inlineData":{"mimeType":"image/png","data":"AAAA"}},
+                                                         {"text":"demo"}])
+        self.assertEqual(native["generationConfig"],{"maxOutputTokens":8000})
+        self.assertNotIn("thinkingConfig",native["generationConfig"])
+
+    def test_unknown_request_fields_are_rejected(self):
+        with self.assertRaisesRegex(ValueError,"no native equivalent"):
+            baseline.to_native({"model":baseline.MODEL,"messages":[],"max_tokens":8000,"reasoning_effort":"high"})
+
+    def test_native_reply_is_mapped_for_the_harness(self):
+        reply = baseline.from_native({"responseId":"r1","modelVersion":"gemini-3.8-flash",
+            "candidates":[{"finishReason":"STOP","content":{"parts":[{"text":"hidden","thought":True},{"text":"{}"}]}}],
+            "usageMetadata":{"promptTokenCount":10,"candidatesTokenCount":2,"thoughtsTokenCount":50,
+                             "cachedContentTokenCount":8,"totalTokenCount":62,"trafficType":"ON_DEMAND_FLEX"}})
+        self.assertEqual(reply["choices"][0]["message"]["content"],"{}")
+        self.assertEqual(reply["model"],baseline.MODEL)
+        self.assertEqual(reply["usage"]["completion_tokens_details"]["reasoning_tokens"],50)
+        self.assertEqual(reply["usage"]["prompt_tokens_details"]["cached_tokens"],8)
+        self.assertEqual(baseline.traffic_type(reply["usage"]),"ON_DEMAND_FLEX")
+
+    def test_flex_headers_and_native_url(self):
+        for tier,flex in [("flex",True),("standard",False)]:
+            client = self.client(tier)
+            response = MagicMock()
+            response.__enter__.return_value = response
+            with patch("urllib.request.urlopen",return_value=response) as urlopen, \
+                 patch("json.load",return_value={"modelVersion":"gemini-3.8-flash","candidates":[]}):
+                status,_ = client._send(client._body(self.MESSAGES))
+            request = urlopen.call_args[0][0]
+            self.assertEqual(status,200)
+            self.assertTrue(request.full_url.endswith("/locations/global/publishers/google/models/gemini-3.8-flash:generateContent"))
+            self.assertEqual(request.get_header("X-vertex-ai-llm-shared-request-type"),"flex" if flex else None)
 
     def test_transport_log_has_usage_and_no_credentials(self):
         with tempfile.TemporaryDirectory() as tmp:
-            client = baseline.openrouter_client(ChatClient)(model=baseline.MODEL,base_url=baseline.API_BASE,
-                api_key="fake-secret",log_path=Path(tmp)/"llm_calls.jsonl")
-            response = {"provider":"Google","usage":{"completion_tokens_details":{"reasoning_tokens":100}},
-                        "choices":[{"finish_reason":"stop"}]}
-            with patch.object(ChatClient,"_post",return_value=(200,response)):
+            client = self.client(log_path=Path(tmp)/"llm_calls.jsonl")
+            self.assertEqual(client.api_key,"fake-token")
+            response = baseline.from_native({"modelVersion":"gemini-3.8-flash","candidates":[{"finishReason":"STOP"}],
+                "usageMetadata":{"thoughtsTokenCount":100,"trafficType":"ON_DEMAND_FLEX"}})
+            with patch.object(client,"_send",return_value=(200,response)):
                 client._post(client._body([]),"turn1")
             text = (Path(tmp)/"transport.jsonl").read_text()
-            self.assertNotIn("fake-secret",text)
-            self.assertEqual(json.loads(text)["usage"]["completion_tokens_details"]["reasoning_tokens"],100)
+            self.assertNotIn("fake-token",text)
+            entry = json.loads(text)
+            self.assertEqual(entry["usage"]["completion_tokens_details"]["reasoning_tokens"],100)
+            self.assertEqual((entry["tier"],entry["traffic_type"],entry["reasoning_fields"]),("flex","ON_DEMAND_FLEX",{}))
 
     def test_dry_configuration_matches_site_seed_and_demo(self):
         config,flags = baseline.configuration(self.args())
         self.assertEqual(config["episodes"][0]["seed"],100000)
         self.assertEqual(config["episodes"][0]["demo_path"],"demos/robotwin2/expert/adjust_bottle")
         self.assertIn("demo_randomized",flags)
+        self.assertEqual((config["tier"],flags[flags.index("--timeout_s")+1]),("flex","900"))
+        self.assertGreater(int(flags[flags.index("--stall_timeout")+1]),int(flags[flags.index("--timeout_s")+1]))
+        self.assertTrue(config["output"].endswith("gemini_flash_flex/adjust_bottle/shard_0"))
 
     def test_invalid_episode_range_is_rejected(self):
         with self.assertRaises(ValueError):
@@ -69,7 +115,7 @@ class BaselineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"lacks reproduction metadata"):
                 baseline.configuration(self.args(output=Path(tmp)))
 
-    def write_result(self,tmp,seed=100000,demo="adjust_bottle",reasoning=100,provider="Google"):
+    def write_result(self,tmp,seed=100000,demo="adjust_bottle",reasoning=100,traffic="ON_DEMAND_FLEX"):
         output = Path(tmp)
         expected = {"episode":0,"seed":100000,"demo_path":"demos/robotwin2/expert/adjust_bottle","site_outcome":"success"}
         (output/"results.json").write_text(json.dumps({"task":"adjust_bottle","model":baseline.MODEL,
@@ -78,8 +124,9 @@ class BaselineTests(unittest.TestCase):
         ep.mkdir()
         (ep/"trace.json").write_text(json.dumps([{"demo":["/repo/demos/robotwin2/expert/"+demo]}]))
         (output/"llm_calls.jsonl").write_text(json.dumps({"usage":{"completion_tokens_details":{"reasoning_tokens":reasoning}}})+"\n")
-        (output/"transport.jsonl").write_text(json.dumps({"status":200,"response_provider":provider})+"\n")
-        return {"output":str(output),"task":"adjust_bottle","episodes":[expected]}
+        (output/"transport.jsonl").write_text(json.dumps({"status":200,"response_model":baseline.MODEL,
+            "traffic_type":traffic,"reasoning_fields":{}})+"\n")
+        return {"output":str(output),"task":"adjust_bottle","tier":"flex","episodes":[expected]}
 
     def test_matching_runtime_conditions_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -91,9 +138,9 @@ class BaselineTests(unittest.TestCase):
             self.assertEqual(len(report["errors"]),2)
             self.assertFalse(report["reproduction_validated"])
 
-    def test_wrong_seed_and_ai_studio_provider_are_exposed(self):
+    def test_wrong_seed_and_standard_traffic_in_flex_run_are_exposed(self):
         with tempfile.TemporaryDirectory() as tmp:
-            report = baseline.check_results(self.write_result(tmp,seed=999999,provider="Google AI Studio"))
+            report = baseline.check_results(self.write_result(tmp,seed=999999,traffic="ON_DEMAND"))
             self.assertEqual(len(report["errors"]),2)
 
 

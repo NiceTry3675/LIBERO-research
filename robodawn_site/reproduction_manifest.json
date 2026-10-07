@@ -8,15 +8,8 @@
   "max_commands_per_turn": 4,
   "max_tokens": 8000,
   "model": "google/gemini-3.8-flash",
-  "provider": {
-    "only": [
-      "google-vertex"
-    ],
-    "allow_fallbacks": false
-  },
-  "reasoning": {
-    "enabled": true
-  },
+  "endpoint": "vertex-ai/generateContent/global",
+  "reasoning": "model default (no reasoning fields sent)",
   "cameras": [
     "agent_camera",
     "top_camera",

@@ -17,6 +17,6 @@ if [ "$(git -C "$repo" rev-parse HEAD)" != "$commit" ]; then
 fi
 git -C "$repo" sparse-checkout set --no-cone '/harness/' '/demos/robotwin2/' '/README.md' '/.gitmodules' '/LICENSE'
 py=${ROBODAWN_PYTHON:-/content/mamba/envs/rt/bin/python}
-"$py" -m uv pip install --python "$py" 'pillow>=10' 'PyYAML>=6' numpy==1.26.4
+"$py" -m uv pip install --python "$py" 'pillow>=10' 'PyYAML>=6' numpy==1.26.4 'google-auth>=2' requests
 "$py" "$root/scripts/audit_robodawn.py"
 echo ROBODAWN_READY

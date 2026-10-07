@@ -20,6 +20,11 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parents[1]
 ROBODAWN_COMMIT = "9247f366cd31f278e10f2fbe5fe8469b5f1b5b94"
 ROBOTWIN_COMMIT = "96c1feab536306b50c26af200044fcdf126e8904"
+# Gemini is called on Vertex AI's native generateContent API with a service account
+# key (Flex PayGo is not offered on the OpenAI-compatible endpoint). Upstream sends
+# no reasoning fields for Gemini, so the model's default thinking is used.
+ENDPOINT = "vertex-ai/generateContent/global"
+REASONING = "model default (no reasoning fields sent)"
 
 
 def git(repo: Path, *args: str) -> str:
@@ -144,14 +149,14 @@ def audit(repo: Path, site: Path) -> tuple[dict, dict]:
                                max(e["request_images"] for t in manifest_tasks for e in t["episodes"])],
         "limits":["Later-turn memory and image captions were reused from Inspect; full history and camera rendering were not regenerated.",
                   "Demo directories and image bytes match the shipped bank. Selecting the entry from initial simulator object positions still requires a GPU run.",
-                  "Upstream Gemini reasoning is intended to be on by default; original gateway settings and actual reasoning token counts are unavailable."],
+                  "Upstream sends no reasoning fields for Gemini and relies on the default thinking; the original gateway and its reasoning token counts are unpublished."],
         "local_vlm_difference":{"role":"Clef offline comparison, not the RoboDawn baseline",
             "different_fields":["system prompt","question/choice user prompt","reply schema","reasoning effort","reply token limit","task demo and command primer context"]}}
     manifest = {"robodawn_commit":commit,"robotwin_commit":rt_commit,
         "task_config":"demo_randomized","seed_base":0,"instruction_type":"unseen",
         "max_turns":45,"max_commands_per_turn":4,"max_tokens":8000,
-        "model":"google/gemini-3.8-flash","provider":{"only":["google-vertex"],"allow_fallbacks":False},
-        "reasoning":{"enabled":True},"cameras":["agent_camera","top_camera","wrist"],
+        "model":"google/gemini-3.8-flash","endpoint":ENDPOINT,
+        "reasoning":REASONING,"cameras":["agent_camera","top_camera","wrist"],
         "smoke_tasks":["adjust_bottle","place_empty_cup"],"tasks":manifest_tasks}
     return report,manifest
 

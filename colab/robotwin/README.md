@@ -66,25 +66,43 @@ python scripts/package_robodawn.py
 ```
 
 묶음은 `outputs/robodawn_reproduction.zip`에 생긴다. 설치 스크립트·실행기·수집 기록이 들어가며
-API 키, `.env`, GPU 에셋은 포함하지 않는다. 노트북은 공개 코드와 에셋을 GPU VM에서 받는다.
+서비스 계정 키, `.env`, GPU 에셋은 포함하지 않는다. 노트북은 공개 코드와 에셋을 GPU VM에서 받고,
+키는 실행 셀에서 따로 업로드한다.
 
 설치가 끝난 GPU VM에서 직접 실행할 때:
 
 ```bash
 cd /content/branchlab
 bash colab/robotwin/prepare_robodawn.sh
-# OPENROUTER_API_KEY는 셸에 안전하게 설정하거나 --api-key-file로 전달한다.
+# Vertex AI 서비스 계정 키는 GOOGLE_APPLICATION_CREDENTIALS로 지정하거나 --credentials로 전달한다.
 /content/mamba/envs/rt/bin/python scripts/run_robodawn_baseline.py --task adjust_bottle --dry-run
 /content/mamba/envs/rt/bin/python scripts/run_robodawn_baseline.py --task adjust_bottle --episodes 1
 /content/mamba/envs/rt/bin/python scripts/run_robodawn_baseline.py --task place_empty_cup --episodes 1
+# 턴 지연 비교용: 대기열이 없는 standard로 따로 잰다
+/content/mamba/envs/rt/bin/python scripts/run_robodawn_baseline.py --task adjust_bottle --episodes 1 --tier standard
 ```
 
 처음에는 두 과제에서 에피소드 0 하나씩 돌린다. 조건 점검이 통과하면 `--episodes 10`으로 이어서 실행한다.
 `--start-episode`로 시작 인덱스를 바꿀 수 있으며 범위는 수집한 0~9 안으로 제한된다.
 과제마다 완료된 에피소드는 같은 결과 폴더에서 건너뛴다.
 
-실행기는 공개 하네스의 시뮬레이터·프롬프트·시연 선택·종료 조건을 그대로 사용한다.
-OpenRouter 모델 이름과 공급자 제한만 연결하고 `reasoning.enabled=true`를 보낸다.
+실행기는 공개 하네스의 시뮬레이터·프롬프트·시연 선택·종료 조건과 요청 본문을 그대로 사용한다.
+OpenRouter를 거치지 않고 서비스 계정 키로 Vertex AI의 기본 API(`generateContent`, `global`)를 직접 부른다.
+Flex PayGo는 OpenAI 호환 엔드포인트에서 지원되지 않기 때문이다(`Flex API is not supported with chatCompletions API`).
+하네스가 만든 OpenAI 형식 요청을 기본 형식으로 옮기고 응답을 되돌리며, 텍스트와 이미지는 바꾸지 않는다.
+액세스 토큰은 한 시간마다 만료되므로 요청마다 필요하면 새로 받는다.
+
+`--tier`는 두 가지다.
+
+| tier | 용도 | 요금 | 제한 시간 |
+| --- | --- | --- | --- |
+| `flex` (기본) | 성공률 재현 | standard의 절반 | 900초 |
+| `standard` | 턴 지연 측정 | 정가 | 300초(공개 하네스 기본값) |
+
+flex 요청은 우선순위가 낮은 대기열을 거쳐 지연이 길고 들쭉날쭉하다. flex 결과의 시간은 지연 비교에 쓰지 않는다.
+하네스의 정지 감시(watchdog)는 요청 하나를 한 단계로 보므로, flex에서는 감시 시간을 요청 제한보다 긴 1200초로 둔다.
+Batch 예측도 반값이지만 결과가 최대 24시간 뒤에 오는 비동기 방식이라, 턴마다 응답을 기다리는 폐루프 실행에 쓸 수 없다.
+공개 하네스처럼 Gemini에는 추론 필드를 보내지 않으며, 모델 기본 추론을 쓴다.
 `src/branchlab/vlm.py`는 Clef 오프라인 비교용이므로 이 기준선 실행에는 쓰지 않는다.
 
 | 조건 | 값 |
@@ -94,27 +112,32 @@ OpenRouter 모델 이름과 공급자 제한만 연결하고 `reasoning.enabled=
 | 턴 / 명령 / 응답 토큰 한도 | `45` / `4` / `8000` |
 | 시연 | 명령 primer 6장 + 초기 물체 좌우에 따라 고른 과제 시연 1개 |
 | 현재 관측 | `agent_camera`, `top_camera`, `left_camera`, `right_camera` |
-| 모델 / 공급자 | `google/gemini-3.8-flash` / `google-vertex`, fallback 없음 |
-| 추론 | 활성화, OpenRouter 기본 강도. 실제 사용량은 실행 후 점검 |
+| 모델 / 엔드포인트 | `google/gemini-3.8-flash` / Vertex AI `generateContent`, `global`, 서비스 계정 키 |
+| 요금 tier | `flex`(성공률) / `standard`(지연 측정) |
+| 추론 | 필드 없음(모델 기본값). 실제 사용량은 실행 후 점검 |
+| temperature | 보내지 않음. Gemini 3.8 Flash는 temperature를 무시하므로 공개 하네스의 `0`을 뺐다 |
 
 실제 시연을 읽어 센 요청 이미지 수는 수집한 500개 에피소드에서 14~48장이다.
 시연 entry 매핑과 시연 원본 seed는 `robodawn_site/reproduction_manifest.json`에 남겼다.
 entry 선택이 사이트와 같은지는 GPU 실행 후 첫 턴의 `trace.json`에서 확인한다.
 
-결과는 `outputs/robodawn/gemini_flash/<task>/shard_0/`에 저장된다.
+결과는 `outputs/robodawn/gemini_flash_<tier>/<task>/shard_0/`에 저장된다.
 공개 하네스의 `results.json`, `trace.json`, `llm_calls.jsonl`, 이미지·영상 외에 다음 기록을 남긴다.
 
 - `reproduction_config.json`: 고정 커밋, seed와 예상 시연, 요청 조건
-- `transport.jsonl`: 시도별 지연, 요청 공급자·추론 설정, 반환 공급자, 종료 이유, 토큰·비용 usage
-- `condition_check.json`: seed·시연 일치, 반환 공급자, 양수 reasoning 토큰 확인. 조건이 어긋나면 실행기가 실패로 끝난다.
+- `transport.jsonl`: 시도별 지연, tier, 보낸 추론 필드(비어 있어야 함), 반환 모델, 트래픽 종류, 종료 이유, 토큰·캐시 usage
+- `condition_check.json`: seed·시연 일치, 반환 모델, 트래픽 종류(flex는 `ON_DEMAND_FLEX`, standard는 `ON_DEMAND`), 양수 reasoning 토큰 확인. 조건이 어긋나면 실행기가 실패로 끝난다.
 
 양수 reasoning 토큰은 추론이 동작했다는 근거이며 원 실험의 추론 강도가 같다는 증거는 아니다.
-원 게이트웨이의 강도와 실제 토큰 사용량은 공개 사이트에 없었다.
-또한 확인한 Vertex endpoint 메타데이터에는 `temperature`가 나열되지 않아 공개 하네스의 `temperature=0`이
-그대로 적용되는지는 실제 endpoint에서 확인해야 한다. 기본 강도를 사용한 요청임을 기록하고 결과를 해석한다.
+원 게이트웨이의 강도와 실제 토큰 사용량은 공개 사이트에 없었다. 모델 기본 추론을 쓴 요청임을 기록하고 결과를 해석한다.
+
+2026-10-07 로컬 점검: 추론 필드 없이 두 tier 모두 reasoning 토큰이 나왔고, 트래픽 종류가 tier대로 찍혔다.
+adjust_bottle 첫 턴과 같은 요청(프라이머·시연·현재 관측 이미지 16장, 입력 21,396토큰)은
+standard 53초(reasoning 6,446), flex 47초(reasoning 3,759)였고 둘 다 명령 JSON을 냈다.
+reasoning이 응답 예산 8000토큰의 대부분을 쓰는 턴이 있으므로 `finish_reason`이 `max_tokens`인 턴을 점검한다.
+매 턴 앞부분(시스템·프라이머·시연)이 같아 Vertex 자동 캐싱이 걸리며, `transport.jsonl`의 `cached_tokens`로 확인한다.
 스모크 실행이나 조건 점검만으로 성공률 재현을 완료했다고 표시하지 않는다.
 
 공개 코드와 API 설정 근거:
 [RoboDawn](https://github.com/Hugo-AGI/RoboDawn/tree/9247f366cd31f278e10f2fbe5fe8469b5f1b5b94),
-[OpenRouter 추론 설정](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens),
-[공급자 제한](https://openrouter.ai/docs/guides/routing/provider-selection).
+[Vertex AI Flex PayGo](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/flex-paygo).
