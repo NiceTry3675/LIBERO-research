@@ -57,6 +57,8 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual(reply["choices"][0]["message"]["content"],"{}")
         self.assertEqual(reply["model"],baseline.MODEL)
         self.assertEqual(reply["usage"]["completion_tokens_details"]["reasoning_tokens"],50)
+        self.assertEqual(reply["usage"]["completion_tokens"],52)   # reply 2 + reasoning 50, billed as output
+        self.assertEqual(reply["usage"]["total_tokens"],62)
         self.assertEqual(reply["usage"]["prompt_tokens_details"]["cached_tokens"],8)
         self.assertEqual(baseline.traffic_type(reply["usage"]),"ON_DEMAND_FLEX")
 
@@ -95,6 +97,10 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual((config["tier"],flags[flags.index("--timeout_s")+1]),("flex","900"))
         self.assertGreater(int(flags[flags.index("--stall_timeout")+1]),int(flags[flags.index("--timeout_s")+1]))
         self.assertTrue(config["output"].endswith("gemini_flash_flex/adjust_bottle/shard_0"))
+        config,flags = baseline.configuration(self.args(start_episode=5,episodes=5))
+        self.assertTrue(config["output"].endswith("gemini_flash_flex/adjust_bottle/shard_5"))
+        self.assertEqual([e["episode"] for e in config["episodes"]],[5,6,7,8,9])
+        self.assertEqual(flags[flags.index("--start_episode")+1],"5")
 
     def test_invalid_episode_range_is_rejected(self):
         with self.assertRaises(ValueError):

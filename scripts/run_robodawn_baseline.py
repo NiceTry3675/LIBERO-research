@@ -92,14 +92,17 @@ def from_native(out: dict) -> dict:
     candidate = (out.get("candidates") or [{}])[0]
     text = "".join(p.get("text","") for p in (candidate.get("content") or {}).get("parts",[]) if not p.get("thought"))
     usage = out.get("usageMetadata") or {}
+    # OpenAI convention: completion tokens include the reasoning (both are billed as output), so the
+    # harness's per-episode completion_tokens is the billed output; the reasoning share is in details.
+    thoughts = usage.get("thoughtsTokenCount",0)
     return {"id":out.get("responseId"),"model":"google/"+str(out.get("modelVersion")),
         "choices":[{"index":0,"message":{"role":"assistant","content":text},
                     "finish_reason":str(candidate.get("finishReason","")).lower() or None}],
         "usage":{"prompt_tokens":usage.get("promptTokenCount",0),
-                 "completion_tokens":usage.get("candidatesTokenCount",0),
+                 "completion_tokens":usage.get("candidatesTokenCount",0)+thoughts,
                  "total_tokens":usage.get("totalTokenCount",0),
                  "prompt_tokens_details":{"cached_tokens":usage.get("cachedContentTokenCount",0)},
-                 "completion_tokens_details":{"reasoning_tokens":usage.get("thoughtsTokenCount",0)},
+                 "completion_tokens_details":{"reasoning_tokens":thoughts},
                  "extra_properties":{"google":{"traffic_type":usage.get("trafficType")}}}}
 
 
@@ -186,7 +189,9 @@ def configuration(args) -> tuple[dict,list[str]]:
             raise ValueError("Demonstration images are missing; fetch demos/robotwin2")
     if any(not (repo/f"demos/robotwin2/primer/turn{n:03d}_agent_camera.png").is_file() for n in range(1,7)):
         raise ValueError("Command primer images are missing")
-    output = args.output.resolve() if args.output else PROJECT/f"outputs/robodawn/gemini_flash_{args.tier}"/args.task/"shard_0"
+    # One output directory per starting episode, so a task can run as several shards at once.
+    output = (args.output.resolve() if args.output else
+              PROJECT/f"outputs/robodawn/gemini_flash_{args.tier}"/args.task/f"shard_{args.start_episode}")
     config_path = output/"reproduction_config.json"
     if config_path.is_file():
         prior = json.loads(config_path.read_text())

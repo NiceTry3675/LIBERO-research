@@ -25,6 +25,7 @@ L4 세션을 만들고 스크립트와 HF 토큰을 올린 뒤 `bootstrap.sh`를
 | `prepare_robodawn.sh` | 고정 커밋의 RoboDawn 하네스와 시연을 받고, 수집한 기록과 오프라인으로 비교한다. |
 
 - Colab의 gcc 13은 CUDA 12.1과 맞지 않아 conda-forge의 gcc 12로 cuRobo를 빌드한다.
+- cuRobo는 VM GPU의 compute capability(L4 8.9, A100 8.0)로 빌드한다. `install_rt.sh`가 `nvidia-smi`로 읽어 `STEP_ARCH`로 남긴다.
 - pytorch3d는 점군 샘플링에만 쓰여 설치하지 않는다.
 
 ### 배경 질감
@@ -137,6 +138,51 @@ standard 53초(reasoning 6,446), flex 47초(reasoning 3,759)였고 둘 다 명�
 reasoning이 응답 예산 8000토큰의 대부분을 쓰는 턴이 있으므로 `finish_reason`이 `max_tokens`인 턴을 점검한다.
 매 턴 앞부분(시스템·프라이머·시연)이 같아 Vertex 자동 캐싱이 걸리며, `transport.jsonl`의 `cached_tokens`로 확인한다.
 스모크 실행이나 조건 점검만으로 성공률 재현을 완료했다고 표시하지 않는다.
+
+### CLI로 부분 재현 돌리기
+
+이 컴퓨터에서 Colab CLI로 VM을 다룬다. `launch.sh --textures`로 설치가 끝난 세션에서 순서대로 실행한다.
+
+```bash
+bash colab/robotwin/subset.sh setup --key <서비스 계정 키>   # 묶음·키 업로드, RoboDawn 준비 (ROBODAWN_READY까지 대기)
+bash colab/robotwin/subset.sh smoke                        # flex로 두 과제 에피소드 0
+bash colab/robotwin/subset.sh smoke --tier standard        # 같은 에피소드, 턴 지연 기준
+bash colab/robotwin/subset.sh run                          # 10개 과제 × 10 에피소드 (A100 80GB면 run --jobs 9)
+bash colab/robotwin/subset.sh status                       # 로그, 진행, 지금까지의 비교
+bash colab/robotwin/subset.sh fetch                        # 결과를 outputs/robodawn_colab/<세션>으로 (--full: 이미지·영상 포함)
+bash colab/robotwin/subset.sh stop                         # VM의 키 삭제 후 VM 종료
+```
+
+명령은 모두 VM에서 백그라운드로 돌고, 로그는 `/content/{prepare,smoke_<tier>,subset}.log`에 남는다.
+`run`은 VM의 `run_subset.sh`를 시작한다. 같은 tier의 두 과제 시험 에피소드가 조건 점검을 통과해야 시작하며, 끊겨도 다시 실행하면 완료된 에피소드는 건너뛴다.
+과제마다 에피소드를 `--shard-size`(기본 5)개씩 나눠 샤드 하나를 프로세스 하나로 돌리고, 동시에 `--jobs`개까지 돌린다. 프로세스는 GPU 메모리를 약 8GB씩 쓰므로 L4는 3, A100 80GB는 약 9다.
+나누지 않으면 가장 느린 과제(handover_block, lift_pot: 에피소드당 36~39턴)가 10개를 연달아 돌려 전체가 그만큼 늘어진다. 사이트 턴 수가 많은 샤드부터 시작한다.
+결과는 `gemini_flash_<tier>/<task>/shard_<시작 에피소드>/`에 쌓이고, 비교는 샤드를 합쳐서 낸다.
+
+L4 두 대로 나눠 돌릴 때는 두 번째 세션을 `launch.sh --textures --session robotwin2`로 따로 설치하고 다음처럼 한다.
+
+```bash
+bash colab/robotwin/subset.sh setup --key <키> && bash colab/robotwin/subset.sh smoke   # robotwin에서만
+bash colab/robotwin/subset.sh --session robotwin2 setup --key <키>
+bash colab/robotwin/subset.sh fetch                                                   # smoke 결과를 이 컴퓨터로
+bash colab/robotwin/subset.sh run --part 1/2
+bash colab/robotwin/subset.sh --session robotwin2 run --part 2/2
+```
+
+`--part K/N`은 과제를 통째로 나누며 사이트 턴 수로 균형을 맞추고, 시험 에피소드를 돌린 두 과제는 1번 몫에 둔다(같은 에피소드를 두 VM이 돌리지 않는다).
+두 번째 VM은 자기 시험 결과가 없으므로, 다른 세션에서 받아 둔 시험 점검이 통과했을 때만 `--force`로 시작한다. 각 샤드는 끝날 때 자기 조건 점검을 다시 한다.
+진행 기록은 세션별로 `subset_<tier>_<세션>/`에 남고, `fetch`는 세션마다 `outputs/robodawn_colab/<세션>/`에 풀어 모든 세션을 합쳐 비교한다.
+기본 과제는 사이트 성공 수가 0~10으로 퍼지고 시연 entry 1·2가 섞이도록 고른 10개다(사이트 합계 56/100).
+
+| 사이트 성공 | 과제 |
+| --- | --- |
+| 10 / 9 / 8 | click_bell, place_a2b_right, move_can_pot |
+| 7 / 7 / 6 | adjust_bottle, place_empty_cup, place_object_stand |
+| 4 / 3 / 2 / 0 | place_fan, open_laptop, handover_block, lift_pot |
+
+`scripts/compare_robodawn.py`가 끝에 비교표를 낸다(`status`와 `fetch`도 출력한다).
+과제별 성공 수, 에피소드 일치율, 턴 수, 종료 이유, 전체 성공률 차이와 95% 구간, 토큰(캐시 비율 포함), 응답 예산에 잘린 응답 수, 호출 시간, 대략의 비용이다.
+100개 에피소드에서 구간은 약 ±14%p다. 과제당 10개로는 과제별 판정을 하지 않는다.
 
 공개 코드와 API 설정 근거:
 [RoboDawn](https://github.com/Hugo-AGI/RoboDawn/tree/9247f366cd31f278e10f2fbe5fe8469b5f1b5b94),

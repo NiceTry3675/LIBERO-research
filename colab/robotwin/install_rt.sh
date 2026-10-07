@@ -20,8 +20,10 @@ sed -i -E 's/("r")(\))( as)/\1, encoding="utf-8") as/g' $SAPIEN_LOCATION/wrapper
 MPLIB_LOCATION=$($PY -m pip show mplib | grep Location | awk '{print $2}')/mplib
 sed -i -E 's/(if np.linalg.norm\(delta_twist\) < 1e-4 )(or collide )(or not within_joint_limit:)/\1\3/g' $MPLIB_LOCATION/planner.py
 echo STEP_PATCH_OK
-# cuRobo with the env's CUDA 12.1 and gcc 12
-export CUDA_HOME=$ENV PATH=$ENV/bin:$PATH TORCH_CUDA_ARCH_LIST="8.9"
+# cuRobo with the env's CUDA 12.1 and gcc 12, for this VM's GPU (L4: 8.9, A100: 8.0)
+arch=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | head -1 | tr -d ' ' || true)
+echo "STEP_ARCH ${arch:=8.9}"
+export CUDA_HOME=$ENV PATH=$ENV/bin:$PATH TORCH_CUDA_ARCH_LIST="$arch"
 export CC=$ENV/bin/x86_64-conda-linux-gnu-gcc CXX=$ENV/bin/x86_64-conda-linux-gnu-g++ CUDAHOSTCXX=$ENV/bin/x86_64-conda-linux-gnu-g++
 cd envs && git clone -q --branch v0.7.8 --depth 1 https://github.com/NVlabs/curobo.git && cd curobo
 $PY -m pip install -q -e . --no-build-isolation && $PY -m pip install -q warp-lang==1.12.0 setuptools==69.5.1 && echo STEP_CUROBO_OK

@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
     paths = [*sorted((ROOT/"colab/robotwin").glob("*.sh")),ROOT/"colab/robotwin/README.md",
              ROOT/"colab/robotwin/reproduce_robodawn.ipynb",
-             *[ROOT/"scripts"/name for name in ["audit_robodawn.py","run_robodawn_baseline.py"]],
+             *[ROOT/"scripts"/name for name in ["audit_robodawn.py","run_robodawn_baseline.py","compare_robodawn.py"]],
              *[ROOT/"robodawn_site"/name for name in ["tasks.csv","episodes.csv","collection_report.json",
                  "harness_audit.json","reproduction_manifest.json","openrouter_model.json"]],
              *sorted((ROOT/"robodawn_site/inspect").glob("*.md"))]
