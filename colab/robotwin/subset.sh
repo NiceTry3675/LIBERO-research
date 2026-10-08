@@ -5,6 +5,7 @@
 #   bash colab/robotwin/subset.sh setup  [--key PATH]  upload the bundle and the Vertex key, prepare RoboDawn
 #   bash colab/robotwin/subset.sh smoke  [--tier T]    episode 0 of adjust_bottle and place_empty_cup
 #   bash colab/robotwin/subset.sh run    [run_subset.sh options]   the ten-task subset, in the background
+#                                                    (--variant V: a relay variant, see run_subset.sh)
 #   bash colab/robotwin/subset.sh status               logs, progress and the comparison so far
 #   bash colab/robotwin/subset.sh fetch  [--full]      results to outputs/robodawn_colab/<session> here
 #                                                    (--full: with images and videos), then compare all sessions
@@ -18,7 +19,9 @@
 # session, fetched here, passed; run then passes --force to run_subset.sh. The key is the
 # Vertex AI service account key ($GOOGLE_APPLICATION_CREDENTIALS by default). It is
 # uploaded as a file, never placed in executed code, which the Colab CLI records
-# in its session history.
+# in its session history. setup also uploads OPENROUTER_API_KEY from the project .env
+# the same way (/content/.openrouter_key, for the Clef checker of the relay variants);
+# stop deletes both.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
@@ -69,10 +72,23 @@ case $cmd in
     python3 "$root/scripts/package_robodawn.py"
     retry limit 300 "$colab" upload -s "$session" "$root/outputs/robodawn_reproduction.zip" /content/robodawn_reproduction.zip
     retry limit 300 "$colab" upload -s "$session" "$key" /content/vertex_key.json
+    # one line; only a trailing \r and one pair of enclosing quotes are removed, so an inner space or '#' fails the check
+    orkey=$(grep -E '^OPENROUTER_API_KEY=' "$root/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '\r' \
+            | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/' || true)
+    if [ -n "$orkey" ]; then
+      [[ $orkey =~ ^[[:graph:]]+$ ]] || { echo "OPENROUTER_API_KEY in .env is not a single token" >&2; exit 1; }
+      tmp=$(mktemp); trap 'rm -f "$tmp"' EXIT; chmod 600 "$tmp"; printf '%s' "$orkey" > "$tmp"
+      retry limit 300 "$colab" upload -s "$session" "$tmp" /content/.openrouter_key
+      rm -f "$tmp"
+    else
+      echo "no OPENROUTER_API_KEY in .env: the Clef checker will not run on '$session'" >&2
+    fi
     vm > /dev/null <<'EOF'
 import hashlib, json, os, zipfile
 from pathlib import Path
 os.chmod("/content/vertex_key.json", 0o600)
+if os.path.exists("/content/.openrouter_key"):
+    os.chmod("/content/.openrouter_key", 0o600)
 with zipfile.ZipFile("/content/robodawn_reproduction.zip") as archive:
     assert all(n.startswith("branchlab/") and ".." not in n for n in archive.namelist())
     archive.extractall("/content")
@@ -90,8 +106,21 @@ EOF
     background "cd $VM && $run --task adjust_bottle; $run --task place_empty_cup; echo SMOKE_DONE" /content/smoke_$tier.log
     ;;
   run)
-    tier=flex; args=("$@")
-    for ((i = 0; i < ${#args[@]}; i++)); do [ "${args[$i]}" = "--tier" ] && tier=${args[$((i + 1))]}; done
+    tier=flex; args=("$@"); variant=; checker=; maxtok=
+    for ((i = 0; i < ${#args[@]}; i++)); do
+      case ${args[$i]} in
+        --tier) tier=${args[$((i + 1))]} ;;
+        --variant) variant=${args[$((i + 1))]} ;;
+        --checker) checker=${args[$((i + 1))]} ;;
+        --max-tokens) maxtok=${args[$((i + 1))]} ;;
+      esac
+    done
+    if [ -n "$variant" ]; then
+      # relay runs check their own conditions per shard; one log per run, so runs can follow each other
+      name=relay_$variant${checker:+_$checker}${maxtok:+_m$maxtok}_$tier
+      background "cd $VM && bash colab/robotwin/run_subset.sh $* --label $session" /content/subset_$name.log
+      exit 0
+    fi
     own=$(vm <<PY
 import json
 from pathlib import Path
@@ -124,7 +153,7 @@ PY
     vm --timeout 120 <<EOF
 import glob, json, subprocess
 from pathlib import Path
-for log in ["/content/prepare.log", *sorted(glob.glob("/content/smoke_*.log")), "/content/subset.log"]:
+for log in ["/content/prepare.log", *sorted(glob.glob("/content/smoke_*.log")), *sorted(glob.glob("/content/subset*.log"))]:
     p = Path(log)
     if p.exists():
         lines = p.read_text(errors="replace").splitlines()
@@ -133,8 +162,13 @@ for log in ["/content/prepare.log", *sorted(glob.glob("/content/smoke_*.log")), 
 for check in sorted(glob.glob("$VM/outputs/robodawn/gemini_flash_*/*/shard_*/condition_check.json")):
     report = json.load(open(check))
     print("check", *check.split("/")[-4:-1], "ok" if not report["errors"] else report["errors"])
-for status in sorted(glob.glob("$VM/outputs/robodawn/subset_*/status.tsv")):
+for status in sorted(glob.glob("$VM/outputs/robodawn*/subset_*/status.tsv")):
     print("==", status); print(open(status).read().rstrip())
+for dev in ([], ["--dev"]):
+    for tier in sorted({p.rsplit("_", 1)[-1] for p in glob.glob("$VM/outputs/robodawn" + ("_dev" if dev else "") + "/relay_*")}):
+        print(f"== relay comparison ({tier}" + (", development episodes)" if dev else ")"))
+        print(subprocess.run(["$PY", "$VM/scripts/compare_relay.py", "--tier", tier, "--runs", "$VM/outputs", *dev],
+                             capture_output=True, text=True, cwd="$VM").stdout)
 for tier in sorted(p.name.removeprefix("gemini_flash_") for p in Path("$VM/outputs/robodawn").glob("gemini_flash_*")):
     print(f"== comparison ({tier})")
     print(subprocess.run(["$PY", "$VM/scripts/compare_robodawn.py", "--tier", tier],
@@ -146,7 +180,9 @@ EOF
     if [ "${1:-}" = "--full" ]; then exclude=""; fi
     vm --timeout 1800 <<EOF > /dev/null
 import subprocess
-subprocess.run("tar czf /content/robodawn_results.tgz $exclude -C $VM/outputs robodawn", shell=True, check=True)
+import os
+dirs = " ".join(d for d in ("robodawn", "robodawn_dev") if os.path.isdir("$VM/outputs/" + d))
+subprocess.run(f"tar czf /content/robodawn_results.tgz $exclude -C $VM/outputs {dirs}", shell=True, check=True)
 EOF
     dest="$root/outputs/robodawn_colab/$session"
     mkdir -p "$dest"
@@ -154,17 +190,24 @@ EOF
     retry limit 3600 "$colab" download -s "$session" /content/robodawn_results.tgz "$tmp/robodawn_results.tgz"
     tar xzf "$tmp/robodawn_results.tgz" -C "$dest"
     rm -rf "$tmp"
-    echo "fetched to ${dest#"$root"/}/robodawn"
+    echo "fetched to ${dest#"$root"/}/robodawn (and robodawn_dev if any)"
     runs=("$root"/outputs/robodawn_colab/*/robodawn)
     for tier in $(for r in "${runs[@]}"; do ls -d "$r"/gemini_flash_* 2>/dev/null; done | sed 's#.*/gemini_flash_##' | sort -u); do
       echo "== $tier, sessions: $(ls "$root/outputs/robodawn_colab" | tr '\n' ' ')"
       python3 "$root/scripts/compare_robodawn.py" --tier "$tier" --runs "${runs[@]}"
     done
+    for dev in "" --dev; do
+      sub=robodawn${dev:+_dev}
+      for tier in $(ls -d "$root"/outputs/robodawn_colab/*/$sub/relay_* 2>/dev/null | sed 's#.*_##' | sort -u); do
+        echo "== relay variants ($tier${dev:+, development episodes})"
+        python3 "$root/scripts/compare_relay.py" --tier "$tier" $dev
+      done
+    done
     ;;
   stop)
     bash "$here/keepalive.sh" stop "$session"
-    echo 'import os; [os.remove(p) for p in ["/content/vertex_key.json"] if os.path.exists(p)]; print("key removed")' | vm \
-      || echo "could not reach '$session' to delete the key" >&2
+    echo 'import os; [os.remove(p) for p in ["/content/vertex_key.json", "/content/.openrouter_key"] if os.path.exists(p)]; print("keys removed")' | vm \
+      || echo "could not reach '$session' to delete the keys" >&2
     retry limit 300 "$colab" stop -s "$session"
     ;;
   *)
