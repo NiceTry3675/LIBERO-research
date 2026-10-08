@@ -7,6 +7,11 @@ id to an option key (score questions: the level index). Answers come back in
 Clef's format with all probability on the chosen option; an unparsable or
 invalid answer is returned as choice None. Reasoning is off unless `think`;
 models that refuse to switch it off get the minimal effort they allow.
+
+backend="vertex" calls Gemini on Vertex AI directly (native generateContent,
+service account key from $GOOGLE_APPLICATION_CREDENTIALS) instead of going
+through OpenRouter. It sends no thinking settings, so the model thinks at its
+default level, as in the RoboDawn baseline; `think` is ignored there.
 """
 
 import json
@@ -19,6 +24,8 @@ from pathlib import Path
 from branchlab.clef import _load_env
 
 URL = "https://openrouter.ai/api/v1/chat/completions"
+VERTEX_URL = ("https://aiplatform.googleapis.com/v1/projects/{project}/locations/global/publishers/google/models/"
+              "{model}:generateContent")
 # Gemini is served on OpenRouter by Google Vertex and Google AI Studio. The BYOK
 # key is registered for Vertex only; a request routed to AI Studio (by load
 # balancing, or as a fallback when Vertex errors) runs on OpenRouter's own key
@@ -69,8 +76,19 @@ def to_answers(reply: dict, questions):
 
 
 class VLM:
-    def __init__(self, cache_path=None, max_retries=6):
-        self._token = _load_env()["OPENROUTER_API_KEY"]
+    def __init__(self, cache_path=None, max_retries=6, backend="openrouter"):
+        self.backend = backend
+        if backend == "vertex":
+            import os
+            from google.oauth2 import service_account
+            key = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+            if not key:
+                raise RuntimeError("backend='vertex' needs GOOGLE_APPLICATION_CREDENTIALS (service account key)")
+            self._project = json.loads(Path(key).read_text())["project_id"]
+            self._credentials = service_account.Credentials.from_service_account_file(
+                key, scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        else:
+            self._token = _load_env()["OPENROUTER_API_KEY"]
         self.max_retries = max_retries
         self.cache_path = Path(cache_path) if cache_path else None
         self._cache = {}
@@ -83,6 +101,8 @@ class VLM:
     def ask(self, state, questions, images=(), model="google/gemini-3.1-flash-lite", key=None, think=False):
         if key is not None and key in self._cache:
             return self._cache[key]
+        if self.backend == "vertex":
+            return self._store(key, self._ask_vertex(state, questions, images, model))
         content = [{"type": "text", "text": render(state, questions)}]
         content += [{"type": "image_url", "image_url": {"url": uri}} for uri in images]
         body = {"model": model, "temperature": 0, "max_tokens": 6000 if think else 800,
@@ -129,9 +149,56 @@ class VLM:
         result = {"answers": to_answers(reply, questions), "usage": out.get("usage", {}),
                   "latency": time.time() - start, "raw": raw[:500], "reasoning": effort,
                   "provider": out.get("provider")}
+        return self._store(key, result)
+
+    def _store(self, key, result):
         if key is not None and self.cache_path:
             with self._lock:
                 self._cache[key] = result
                 with open(self.cache_path, "a") as f:
                     f.write(json.dumps({"key": key, "result": result}) + "\n")
         return result
+
+    def _ask_vertex(self, state, questions, images, model):
+        from google.auth.transport.requests import Request
+        parts = [{"text": SYSTEM + "\n\n" + render(state, questions)}]
+        for uri in images:
+            mime, data = uri.removeprefix("data:").split(";base64,", 1)
+            parts.append({"inlineData": {"mimeType": mime, "data": data}})
+        body = json.dumps({"contents": [{"role": "user", "parts": parts}],
+                           "generationConfig": {"maxOutputTokens": 8000, "responseMimeType": "application/json"}}).encode()
+        url = VERTEX_URL.format(project=self._project, model=model.removeprefix("google/"))
+        out, start = {}, time.time()
+        for attempt in range(self.max_retries):
+            with self._lock:
+                if not self._credentials.valid:
+                    self._credentials.refresh(Request())
+                token = self._credentials.token
+            request = urllib.request.Request(url, data=body, method="POST", headers={
+                "Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+            start = time.time()
+            try:
+                with urllib.request.urlopen(request, timeout=600) as response:
+                    out = json.load(response)
+                break
+            except urllib.error.HTTPError as e:
+                message = e.read().decode()[:300]
+                if e.code in (408, 429, 500, 502, 503, 504) and attempt + 1 < self.max_retries:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise RuntimeError(f"Vertex HTTP {e.code}: {message}") from None
+            except (urllib.error.URLError, TimeoutError):
+                if attempt + 1 < self.max_retries:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise
+        candidate = (out.get("candidates") or [{}])[0]
+        raw = "".join(p.get("text", "") for p in (candidate.get("content") or {}).get("parts", []) if not p.get("thought"))
+        try:
+            reply = json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
+        except ValueError:
+            reply = {}
+        usage = out.get("usageMetadata", {})
+        return {"answers": to_answers(reply, questions), "usage": usage, "latency": time.time() - start,
+                "raw": raw[:500], "reasoning": "default", "provider": "vertex",
+                "traffic_type": usage.get("trafficType"), "finish_reason": candidate.get("finishReason")}
