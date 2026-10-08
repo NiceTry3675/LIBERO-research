@@ -29,15 +29,35 @@ cmd=${1:-}; shift || true
 PY=/content/mamba/envs/rt/bin/python
 VM=/content/branchlab
 
-vm() { "$colab" exec -s "$session" "$@"; }
+# A `colab` call occasionally hangs or loses its connection (2026-10-08), so each call is bounded
+# (perl's alarm: macOS has no `timeout`) and retried. Everything sent with vm must be safe to run twice.
+limit() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+retry() { for try in 1 2 3; do "$@" && return 0; echo "failed (try $try/3): $*" >&2; sleep 15; done; return 1; }
+# vm [--timeout SECONDS]: run Python from stdin on the VM and print its output.
+vm() {
+  local t=120 code out
+  if [ "${1:-}" = "--timeout" ]; then t=$2; fi
+  code=$(cat)
+  for try in 1 2 3; do
+    if out=$(printf '%s\n' "$code" | limit $((t + 60)) "$colab" exec -s "$session" --timeout "$t" 2>&1); then
+      printf '%s\n' "$out"; return 0
+    fi
+    echo "colab exec failed (try $try/3): $(printf '%s\n' "$out" | tail -1)" >&2; sleep 15
+  done
+  return 1
+}
 
-# Start a shell command on the VM in the background, logging to $2.
+# Start a shell command on the VM in the background, logging to $2. A marker named after this call
+# makes a retried exec start it only once.
 background() {
-  local command=$1 log=$2
-  printf 'import subprocess\nsubprocess.Popen(%s, shell=True, executable="/bin/bash", start_new_session=True)\n' \
-    "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "{ $command; } > $log 2>&1")" | vm > /dev/null
+  local command=$1 log=$2 marker="/content/.started-$(date +%s)-$$-$RANDOM"
+  printf 'import os, subprocess\nif not os.path.exists("%s"):\n    open("%s", "w").close()\n    subprocess.Popen(%s, shell=True, executable="/bin/bash", start_new_session=True)\n' \
+    "$marker" "$marker" "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "{ $command; } > $log 2>&1")" | vm > /dev/null
   echo "started on '$session'; log: $log"
 }
+
+# Detached work leaves the kernel idle, and Colab reclaims an idle VM in about 15 minutes.
+case $cmd in setup|smoke|run|status|fetch) bash "$here/keepalive.sh" start "$session" ;; esac
 
 case $cmd in
   setup)
@@ -47,8 +67,8 @@ case $cmd in
     echo 'print("BOOTSTRAP_DONE" in open("/content/bootstrap.log").read())' | vm | grep -q True \
       || { echo "bootstrap is not done on '$session' (launch.sh --textures first)" >&2; exit 1; }
     python3 "$root/scripts/package_robodawn.py"
-    "$colab" upload -s "$session" "$root/outputs/robodawn_reproduction.zip" /content/robodawn_reproduction.zip
-    "$colab" upload -s "$session" "$key" /content/vertex_key.json
+    retry limit 300 "$colab" upload -s "$session" "$root/outputs/robodawn_reproduction.zip" /content/robodawn_reproduction.zip
+    retry limit 300 "$colab" upload -s "$session" "$key" /content/vertex_key.json
     vm > /dev/null <<'EOF'
 import hashlib, json, os, zipfile
 from pathlib import Path
@@ -131,7 +151,7 @@ EOF
     dest="$root/outputs/robodawn_colab/$session"
     mkdir -p "$dest"
     tmp=$(mktemp -d)
-    "$colab" download -s "$session" /content/robodawn_results.tgz "$tmp/robodawn_results.tgz"
+    retry limit 3600 "$colab" download -s "$session" /content/robodawn_results.tgz "$tmp/robodawn_results.tgz"
     tar xzf "$tmp/robodawn_results.tgz" -C "$dest"
     rm -rf "$tmp"
     echo "fetched to ${dest#"$root"/}/robodawn"
@@ -142,8 +162,10 @@ EOF
     done
     ;;
   stop)
-    echo 'import os; [os.remove(p) for p in ["/content/vertex_key.json"] if os.path.exists(p)]; print("key removed")' | vm
-    "$colab" stop -s "$session"
+    bash "$here/keepalive.sh" stop "$session"
+    echo 'import os; [os.remove(p) for p in ["/content/vertex_key.json"] if os.path.exists(p)]; print("key removed")' | vm \
+      || echo "could not reach '$session' to delete the key" >&2
+    retry limit 300 "$colab" stop -s "$session"
     ;;
   *)
     sed -n '2,16p' "$0"; exit 2 ;;

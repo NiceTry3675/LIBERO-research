@@ -21,7 +21,7 @@
 # the VM that ran them, so no episode runs on two VMs.
 #
 # Progress: outputs/robodawn/subset_<tier>[_<label>]/status.tsv (one line per
-# start and end), one log per shard next to it.
+# start, restart and end), one log per shard next to it.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
@@ -61,15 +61,30 @@ mkdir -p "$logs"
 status="$logs/status.tsv"
 export root py tier episodes status logs
 
+# A shard whose process dies is restarted while each attempt finishes at least one more episode:
+# finished episodes are skipped, so a restart only continues. On a 24 GB L4 with three processes,
+# each process's GPU memory grows with every episode and the third episode's reset failed with
+# "cannot create buffer" (2026-10-08); a fresh process starts from about 4.6 GB again. An attempt
+# that finishes nothing new (a condition error, a missing key) is not repeated.
+finished() {
+  "$py" -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["episodes"]))' \
+    "$root/outputs/robodawn/gemini_flash_$tier/$1/shard_$2/results.json" 2>/dev/null || echo 0
+}
 run_shard() {
   task=$1; start=$2; count=$3; name="$task episodes $start-$((start + count - 1))"
   printf '%s\t%s\tstart\n' "$(date '+%F %T')" "$name" >> "$status"
-  "$py" "$root/scripts/run_robodawn_baseline.py" --task "$task" --start-episode "$start" --episodes "$count" \
-    --tier "$tier" >> "$logs/${task}__$start.log" 2>&1
-  code=$?
+  while true; do
+    before=$(finished "$task" "$start")
+    "$py" "$root/scripts/run_robodawn_baseline.py" --task "$task" --start-episode "$start" --episodes "$count" \
+      --tier "$tier" >> "$logs/${task}__$start.log" 2>&1
+    code=$?
+    after=$(finished "$task" "$start")
+    [ $code -eq 0 ] || [ "$after" -le "$before" ] || [ "$after" -ge "$count" ] && break
+    printf '%s\t%s\trestart (exit %s, %s/%s episodes)\n' "$(date '+%F %T')" "$name" "$code" "$after" "$count" >> "$status"
+  done
   printf '%s\t%s\t%s\n' "$(date '+%F %T')" "$name" "$([ $code -eq 0 ] && echo done || echo "failed $code")" >> "$status"
 }
-export -f run_shard
+export -f finished run_shard
 
 # "task start count" per shard of this part, the most site turns first (longest-first keeps the last shard short)
 shards=$("$py" - "$root/robodawn_site/reproduction_manifest.json" "$episodes" "$shard" "$part" "${tasks[@]}" <<'PY'

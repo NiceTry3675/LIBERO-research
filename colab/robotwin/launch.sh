@@ -14,6 +14,12 @@ here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
 colab=$(command -v colab || echo "$HOME/.local/bin/colab")
 session=robotwin; gpu=L4; textures=0
+# A `colab` call occasionally hangs or loses its connection (2026-10-08), so each call is bounded
+# (perl's alarm: macOS has no `timeout`) and retried; everything sent with vm is safe to run twice.
+limit() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+retry() { for try in 1 2 3; do "$@" && return 0; echo "failed (try $try/3): $*" >&2; sleep 15; done; return 1; }
+vm_once() { printf '%s\n' "$1" | limit 180 "$colab" exec -s "$session" --timeout 120 > /dev/null; }
+vm() { local code; code=$(cat); retry vm_once "$code"; }
 while [ $# -gt 0 ]; do
   case $1 in
     --textures) textures=1 ;;
@@ -24,25 +30,31 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if ! "$colab" sessions 2>&1 | grep -qw "$session"; then
-  "$colab" new -s "$session" --gpu "$gpu"
+if ! limit 60 "$colab" sessions 2>&1 | grep -qw "$session"; then
+  limit 900 "$colab" new -s "$session" --gpu "$gpu"
 fi
+# Detached work leaves the kernel idle, and Colab reclaims an idle VM in about 15 minutes.
+bash "$here/keepalive.sh" start "$session"
 for f in bootstrap download_assets setup_env install_rt run_expert; do
-  "$colab" upload -s "$session" "$here/$f.sh" "/content/$f.sh"
+  retry limit 300 "$colab" upload -s "$session" "$here/$f.sh" "/content/$f.sh"
 done
 
 token=$(grep -E '^HUGGINGFACE_API_KEY=' "$root/.env" 2>/dev/null | cut -d= -f2- | tr -d "\"' \r" || true)
 if [ -n "$token" ]; then
   tmp=$(mktemp); chmod 600 "$tmp"; printf '%s' "$token" > "$tmp"
-  "$colab" upload -s "$session" "$tmp" /content/.hf_token
+  retry limit 300 "$colab" upload -s "$session" "$tmp" /content/.hf_token
   rm -f "$tmp"
-  echo 'import os; os.chmod("/content/.hf_token", 0o600)' | "$colab" exec -s "$session" > /dev/null
+  echo 'import os; os.chmod("/content/.hf_token", 0o600)' | vm
 else
   echo "no HUGGINGFACE_API_KEY in .env; downloading anonymously"
 fi
 
-echo "import subprocess; subprocess.Popen('WITH_TEXTURES=$textures bash /content/bootstrap.sh > /content/bootstrap.log 2>&1', shell=True, executable='/bin/bash')" \
-  | "$colab" exec -s "$session" > /dev/null
+# bootstrap.log exists as soon as the bootstrap starts, so a retried exec starts it only once.
+vm <<EOF
+import os, subprocess
+if not os.path.exists("/content/bootstrap.log"):
+    subprocess.Popen('WITH_TEXTURES=$textures bash /content/bootstrap.sh > /content/bootstrap.log 2>&1', shell=True, executable='/bin/bash')
+EOF
 echo "bootstrap started on '$session' (textures: $textures). Follow it with:"
 echo "  echo 'print(open(\"/content/bootstrap.log\").read())' | colab exec -s $session"
-echo "Stop the VM when done: colab stop -s $session"
+echo "Stop the VM when done: bash colab/robotwin/subset.sh --session $session stop (also stops the keepalive)"

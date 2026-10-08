@@ -12,7 +12,7 @@ bash colab/robotwin/launch.sh
 
 L4 세션을 만들고 스크립트와 HF 토큰을 올린 뒤 `bootstrap.sh`를 VM에서 백그라운드로 시작한다. 같은 이름의 세션이 이미 있으면 그 세션을 쓴다. RoboDawn과 비교하는 공식 평가처럼 무작위화 장면이 필요하면 `--textures`를 붙인다. `--session`과 `--gpu`로 세션 이름과 GPU를 바꿀 수 있다.
 
-`/content/bootstrap.log` 끝에 `BOOTSTRAP_DONE`이 나오면 끝난 것이다. 실패하면 `BOOTSTRAP_FAILED`와 실패한 단계가 찍힌다. 각 부분이 걸린 시간은 `TIME` 줄로 남는다. 끝나면 반드시 `colab stop -s robotwin`.
+`/content/bootstrap.log` 끝에 `BOOTSTRAP_DONE`이 나오면 끝난 것이다. 실패하면 `BOOTSTRAP_FAILED`와 실패한 단계가 찍힌다. 각 부분이 걸린 시간은 `TIME` 줄로 남는다. 끝나면 반드시 `bash colab/robotwin/subset.sh stop`(VM의 키 삭제, keep-alive 중지, VM 종료). 키를 올리기 전이면 `colab stop -s robotwin`도 된다.
 
 | 스크립트 | 하는 일 |
 | --- | --- |
@@ -150,12 +150,18 @@ bash colab/robotwin/subset.sh smoke --tier standard        # 같은 에피소드
 bash colab/robotwin/subset.sh run                          # 10개 과제 × 10 에피소드 (A100 80GB면 run --jobs 9)
 bash colab/robotwin/subset.sh status                       # 로그, 진행, 지금까지의 비교
 bash colab/robotwin/subset.sh fetch                        # 결과를 outputs/robodawn_colab/<세션>으로 (--full: 이미지·영상 포함)
-bash colab/robotwin/subset.sh stop                         # VM의 키 삭제 후 VM 종료
+bash colab/robotwin/subset.sh stop                         # VM의 키 삭제, keep-alive 중지, VM 종료
 ```
 
 명령은 모두 VM에서 백그라운드로 돌고, 로그는 `/content/{prepare,smoke_<tier>,subset}.log`에 남는다.
+Colab CLI는 커널이 활동하는 동안만 VM을 유지해, 작업을 백그라운드로 띄우고 손을 놓으면 약 15분 뒤 VM이 회수된다(2026-10-08).
+그래서 `launch.sh`와 `subset.sh`의 각 명령이 이 컴퓨터에서 `keepalive.sh`를 띄워 4분마다 짧은 exec를 보낸다. 기록은 `outputs/colab_keepalive/<세션>.log`에 남고, `subset.sh stop`이 끄며, 세션이 사라지면 저절로 끝난다.
+이 컴퓨터가 잠들면 keep-alive도 멈추므로 밤새 돌릴 때는 잠자기를 막아 둔다.
+`colab exec`가 가끔 끝나지 않으므로 스크립트의 CLI 호출은 시간 제한을 두고 세 번까지 다시 시도한다. VM에 보내는 코드는 두 번 실행돼도 안전하게 짰다.
 `run`은 VM의 `run_subset.sh`를 시작한다. 같은 tier의 두 과제 시험 에피소드가 조건 점검을 통과해야 시작하며, 끊겨도 다시 실행하면 완료된 에피소드는 건너뛴다.
 과제마다 에피소드를 `--shard-size`(기본 5)개씩 나눠 샤드 하나를 프로세스 하나로 돌리고, 동시에 `--jobs`개까지 돌린다. 프로세스는 GPU 메모리를 약 8GB씩 쓰므로 L4는 3, A100 80GB는 약 9다.
+프로세스의 GPU 메모리는 에피소드마다 늘어(4.6→8.4GB), L4에서 셋을 동시에 돌리면 대개 세 번째 에피소드 시작에서 `cannot create buffer`로 죽는다.
+그래서 샤드 프로세스가 죽으면 한 에피소드라도 더 끝낸 동안은 같은 샤드를 새 프로세스로 다시 띄운다(`status.tsv`에 `restart` 줄). 끝난 에피소드는 건너뛰므로 이어서 도는 것과 같다. 진척 없이 죽으면(조건 오류 등) 다시 띄우지 않고 `failed`로 남긴다.
 나누지 않으면 가장 느린 과제(handover_block, lift_pot: 에피소드당 36~39턴)가 10개를 연달아 돌려 전체가 그만큼 늘어진다. 사이트 턴 수가 많은 샤드부터 시작한다.
 결과는 `gemini_flash_<tier>/<task>/shard_<시작 에피소드>/`에 쌓이고, 비교는 샤드를 합쳐서 낸다.
 
