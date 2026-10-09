@@ -9,6 +9,7 @@
 #   bash colab/robotwin/subset.sh status               logs, progress and the comparison so far
 #   bash colab/robotwin/subset.sh fetch  [--full]      results to outputs/robodawn_colab/<session> here
 #                                                    (--full: with images and videos), then compare all sessions
+#   bash colab/robotwin/subset.sh replay [run_replay.sh options]   replay recorded episodes, capture depth
 #   bash colab/robotwin/subset.sh stop                 delete the key on the VM, then stop the VM
 #
 # --session NAME (default robotwin) goes before the command. Two L4 VMs:
@@ -60,7 +61,7 @@ background() {
 }
 
 # Detached work leaves the kernel idle, and Colab reclaims an idle VM in about 15 minutes.
-case $cmd in setup|smoke|run|status|fetch) bash "$here/keepalive.sh" start "$session" ;; esac
+case $cmd in setup|smoke|run|replay|status|fetch) bash "$here/keepalive.sh" start "$session" ;; esac
 
 case $cmd in
   setup)
@@ -83,12 +84,28 @@ case $cmd in
     else
       echo "no OPENROUTER_API_KEY in .env: the Clef checker will not run on '$session'" >&2
     fi
+    # the object monitor's Clef runs on Workers AI (OpenRouter drops Clef's images): only these two lines go up
+    cfenv=$(mktemp); trap 'rm -f "${tmp:-}" "${cfenv:-}"' EXIT; chmod 600 "$cfenv"
+    ok=1
+    for name in CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_AUTH_TOKEN; do
+      value=$(grep -E "^$name=" "$root/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '\r' \
+              | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/' || true)
+      if [[ $value =~ ^[[:graph:]]+$ ]]; then printf '%s=%s\n' "$name" "$value" >> "$cfenv"; else ok=0; fi
+    done
+    value=
+    if [ $ok -eq 1 ]; then
+      retry limit 300 "$colab" upload -s "$session" "$cfenv" /content/.cloudflare_env
+    else
+      echo "CLOUDFLARE_ACCOUNT_ID/CLOUDFLARE_AUTH_TOKEN missing or not single tokens in .env: no object monitor on '$session'" >&2
+    fi
+    rm -f "$cfenv"
     vm > /dev/null <<'EOF'
 import hashlib, json, os, zipfile
 from pathlib import Path
 os.chmod("/content/vertex_key.json", 0o600)
-if os.path.exists("/content/.openrouter_key"):
-    os.chmod("/content/.openrouter_key", 0o600)
+for secret in ("/content/.openrouter_key", "/content/.cloudflare_env"):
+    if os.path.exists(secret):
+        os.chmod(secret, 0o600)
 with zipfile.ZipFile("/content/robodawn_reproduction.zip") as archive:
     assert all(n.startswith("branchlab/") and ".." not in n for n in archive.namelist())
     archive.extractall("/content")
@@ -106,18 +123,19 @@ EOF
     background "cd $VM && $run --task adjust_bottle; $run --task place_empty_cup; echo SMOKE_DONE" /content/smoke_$tier.log
     ;;
   run)
-    tier=flex; args=("$@"); variant=; checker=; maxtok=
+    tier=flex; args=("$@"); variant=; checker=; maxtok=; monitor=
     for ((i = 0; i < ${#args[@]}; i++)); do
       case ${args[$i]} in
         --tier) tier=${args[$((i + 1))]} ;;
         --variant) variant=${args[$((i + 1))]} ;;
         --checker) checker=${args[$((i + 1))]} ;;
         --max-tokens) maxtok=${args[$((i + 1))]} ;;
+        --monitor) monitor=${args[$((i + 1))]} ;;
       esac
     done
     if [ -n "$variant" ]; then
       # relay runs check their own conditions per shard; one log per run, so runs can follow each other
-      name=relay_$variant${checker:+_$checker}${maxtok:+_m$maxtok}_$tier
+      name=relay_$variant${checker:+_$checker}${monitor:+_mon$monitor}${maxtok:+_m$maxtok}_$tier
       background "cd $VM && bash colab/robotwin/run_subset.sh $* --label $session" /content/subset_$name.log
       exit 0
     fi
@@ -149,11 +167,16 @@ PY
     fi
     background "cd $VM && bash colab/robotwin/run_subset.sh $* --label $session $extra" /content/subset.log
     ;;
+  replay)
+    # needs setup with outputs/replay/manifest.json built here first (scripts/replay_capture.py manifest)
+    background "cd $VM && bash colab/robotwin/run_replay.sh $*" /content/replay.log
+    ;;
   status)
     vm --timeout 120 <<EOF
 import glob, json, subprocess
 from pathlib import Path
-for log in ["/content/prepare.log", *sorted(glob.glob("/content/smoke_*.log")), *sorted(glob.glob("/content/subset*.log"))]:
+for log in ["/content/prepare.log", *sorted(glob.glob("/content/smoke_*.log")), *sorted(glob.glob("/content/subset*.log")),
+            "/content/replay.log"]:
     p = Path(log)
     if p.exists():
         lines = p.read_text(errors="replace").splitlines()
@@ -162,7 +185,7 @@ for log in ["/content/prepare.log", *sorted(glob.glob("/content/smoke_*.log")), 
 for check in sorted(glob.glob("$VM/outputs/robodawn/gemini_flash_*/*/shard_*/condition_check.json")):
     report = json.load(open(check))
     print("check", *check.split("/")[-4:-1], "ok" if not report["errors"] else report["errors"])
-for status in sorted(glob.glob("$VM/outputs/robodawn*/subset_*/status.tsv")):
+for status in sorted(glob.glob("$VM/outputs/robodawn*/subset_*/status.tsv")) + glob.glob("$VM/outputs/replay/status.tsv"):
     print("==", status); print(open(status).read().rstrip())
 for dev in ([], ["--dev"]):
     for tier in sorted({p.rsplit("_", 1)[-1] for p in glob.glob("$VM/outputs/robodawn" + ("_dev" if dev else "") + "/relay_*")}):
@@ -181,7 +204,7 @@ EOF
     vm --timeout 1800 <<EOF > /dev/null
 import subprocess
 import os
-dirs = " ".join(d for d in ("robodawn", "robodawn_dev") if os.path.isdir("$VM/outputs/" + d))
+dirs = " ".join(d for d in ("robodawn", "robodawn_dev", "replay") if os.path.isdir("$VM/outputs/" + d))
 subprocess.run(f"tar czf /content/robodawn_results.tgz $exclude -C $VM/outputs {dirs}", shell=True, check=True)
 EOF
     dest="$root/outputs/robodawn_colab/$session"
@@ -206,7 +229,7 @@ EOF
     ;;
   stop)
     bash "$here/keepalive.sh" stop "$session"
-    echo 'import os; [os.remove(p) for p in ["/content/vertex_key.json", "/content/.openrouter_key"] if os.path.exists(p)]; print("keys removed")' | vm \
+    echo 'import os; [os.remove(p) for p in ["/content/vertex_key.json", "/content/.openrouter_key", "/content/.cloudflare_env"] if os.path.exists(p)]; print("keys removed")' | vm \
       || echo "could not reach '$session' to delete the keys" >&2
     retry limit 300 "$colab" stop -s "$session"
     ;;

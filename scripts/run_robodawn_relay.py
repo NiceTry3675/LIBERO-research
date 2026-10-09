@@ -48,14 +48,16 @@ SEEDS = 50              # valid seeds shipped per task
 
 
 DEFAULTS = {"threshold": 0.5, "max_steps": 3, "empty_grasp_limit": 0, "max_tokens": 8000}
+MONITOR_POLICIES = ("off", "both", "code", "clef")
 
 
 def run_name(variant: str, checker: str | None, tier: str, threshold: float = 0.5, max_steps: int = 3,
-             empty_grasp_limit: int = 0, max_tokens: int = 8000) -> str:
+             empty_grasp_limit: int = 0, max_tokens: int = 8000, monitor: str = "off", monitor_need: int = 2) -> str:
     return (f"relay_{variant}" + (f"_{checker}" if variant == "checked" else "")
             + (f"_t{threshold:g}" if variant == "checked" and threshold != DEFAULTS["threshold"] else "")
             + (f"_s{max_steps}" if max_steps != DEFAULTS["max_steps"] else "")
             + (f"_g{empty_grasp_limit}" if empty_grasp_limit != DEFAULTS["empty_grasp_limit"] else "")
+            + (f"_mon{monitor}{monitor_need}" if monitor != "off" else "")
             + (f"_m{max_tokens}" if max_tokens != DEFAULTS["max_tokens"] else "")
             + f"_{tier}")
 
@@ -109,13 +111,16 @@ def configuration(args) -> tuple[dict, list[str]]:
     episodes, evaluation = episode_plan(args)
     if any(not (repo/f"demos/robotwin2/primer/turn{n:03d}_agent_camera.png").is_file() for n in range(1, 7)):
         raise ValueError("Command primer images are missing")
+    monitor, need = getattr(args, "monitor", "off"), getattr(args, "monitor_need", 2)
     name = run_name(args.variant, args.checker, args.tier, args.threshold, args.max_steps, args.empty_grasp_limit,
-                    args.max_tokens)
+                    args.max_tokens, monitor, need)
     output = (args.output.resolve() if args.output else
               PROJECT/("outputs/robodawn" if evaluation else "outputs/robodawn_dev")/name/args.task/f"shard_{args.start_episode}")
     relay = {"variant": args.variant, "checker": args.checker, "checker_model": CHECKERS.get(args.checker),
              "threshold": args.threshold if args.variant == "checked" else None, "max_steps": args.max_steps,
-             "empty_grasp_limit": args.empty_grasp_limit, "turns_count_relayed_steps": True}
+             "empty_grasp_limit": args.empty_grasp_limit, "turns_count_relayed_steps": True,
+             **({"monitor": {"policy": monitor, "need": need, "model": "cloudflare/clef (Workers AI)"}}
+                if monitor != "off" else {})}
     config = {"robodawn_commit": ROBODAWN_COMMIT, "robotwin_commit": ROBOTWIN_COMMIT, "task": args.task,
               "episodes": episodes, "evaluation": evaluation, "output": str(output), "model": MODEL,
               "endpoint": ENDPOINT, "tier": args.tier, "timeout_s": TIERS[args.tier]["timeout_s"],
@@ -205,6 +210,42 @@ def openrouter_key(path: Path | None) -> str | None:
     return key or None
 
 
+def cloudflare_env(path: Path | None) -> Path:
+    """The file with CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AUTH_TOKEN: the uploaded one (the VM) or the project
+    .env (this machine). Never printed."""
+    if path and path.is_file():
+        return path
+    if (PROJECT/".env").is_file():
+        return PROJECT/".env"
+    raise ValueError("the object monitor needs the Cloudflare account id and token (--cloudflare-env)")
+
+
+def monitor_factory(policy: str, need: int, env_path: Path):
+    """A factory of object monitors that ask Clef on Workers AI (where Clef sees images), checked once here."""
+    import os as _os
+    keep = {k: _os.environ.get(k) for k in ("MUJOCO_GL", "PYOPENGL_PLATFORM", "LIBERO_CONFIG_PATH")}
+    sys.path.insert(0, str(PROJECT/"src"))
+    from branchlab.clef import Clef
+    from branchlab.rtscene import monitor, robot_model
+    for k, v in keep.items():                  # branchlab sets LIBERO's rendering defaults on import; undo them
+        if v is None:
+            _os.environ.pop(k, None)
+        else:
+            _os.environ[k] = v
+    clef = Clef(backend="workers", env_path=env_path)
+    boxes = robot_model.load()
+
+    def ask(state, questions, images):
+        return clef.ask(state, questions, images)["answers"]
+    from PIL import Image
+    red = monitor.render.jpeg_uri(Image.new("RGB", (64, 48), (220, 20, 20)))
+    p = ask("A test image.", {"red": {"type": "noul", "instructions": "Is this image mostly red?"}}, [red])["red"]["noul"]
+    if p < 0.5:
+        raise RuntimeError(f"Clef on Workers AI does not see the test image (P(red) {p:.2f})")
+    print(f"object monitor: Clef answers P(red) {p:.2f} on a red image")
+    return lambda: monitor.ObjectMonitor(ask, boxes, policy=policy, need=need)
+
+
 def preflight(checker) -> None:
     """One question on a plain red image, so a bad key or model stops the run before any episode."""
     from PIL import Image
@@ -234,6 +275,10 @@ def main():
     parser.add_argument("--credentials", type=Path, default=os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
     parser.add_argument("--openrouter-key-file", type=Path, default=Path("/content/.openrouter_key"))
     parser.add_argument("--tier", choices=sorted(TIERS), default="flex")
+    parser.add_argument("--monitor", choices=MONITOR_POLICIES, default="off",
+                        help="object monitor: end the episode when a located object has fallen (code, Clef or both)")
+    parser.add_argument("--monitor-need", type=int, default=2, help="flagged checks in a row before the monitor stops")
+    parser.add_argument("--cloudflare-env", type=Path, default=Path("/content/.cloudflare_env"))
     parser.add_argument("--no-video", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -256,10 +301,12 @@ def main():
                if args.variant == "checked" else None)
     if checker:
         preflight(checker)
+    monitor = (monitor_factory(args.monitor, args.monitor_need, cloudflare_env(args.cloudflare_env))
+               if args.monitor != "off" else None)
     run_robotwin_eval.ChatClient = vertex_client(run_robotwin_eval.ChatClient, credentials, args.tier)
     run_robotwin_eval.MLLMDiscreteAgent = functools.partial(
         relay.RelayAgent, variant=args.variant, checker=checker, max_steps=args.max_steps,
-        empty_grasp_limit=args.empty_grasp_limit)
+        empty_grasp_limit=args.empty_grasp_limit, monitor=monitor)
     Path(config["output"]).mkdir(parents=True, exist_ok=True)
     (Path(config["output"])/"relay_config.json").write_text(json.dumps(config, indent=2)+"\n")
     sys.argv = [str(args.repo/"harness/run_robotwin_eval.py"), *flags,

@@ -14,6 +14,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/"scripts"))
 sys.path.insert(0, str(ROOT/"third_party/robodawn"))
+sys.path.insert(0, str(ROOT/"src"))
 import compare_relay
 import robodawn_relay as relay
 import run_robodawn_relay as runner
@@ -340,6 +341,93 @@ class RelayTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             result, _, _, _, _ = run(relay.RelayAgent, script, tmp=tmp, variant="baseline", empty_grasp_limit=2)
         self.assertEqual((result.finished_reason, result.empty_closes, result.turns), ("empty_grasp_limit", 2, 1))
+
+
+class FakeMonitor:
+    """Binds whatever coordinates it gets and reports a fall from `fall_at` (a turn) on."""
+
+    def __init__(self, fall_at=99):
+        self.objects, self.calls, self.fall_at, self.points, self.turns = [], 0, fall_at, None, []
+        self.grippers = []
+
+    def note_close(self, arm, tcp, caught):
+        self.grippers.append(("close", arm, tuple(tcp), caught))
+
+    def note_open(self, arm, tcp):
+        self.grippers.append(("open", arm, tuple(tcp)))
+
+    def bind(self, cap, points):
+        self.points, self.objects = points, ["object"] * len(points)
+        return [{"at": p} for p in points]
+
+    def check(self, cap):
+        self.turns.append(cap.turn)
+        self.calls += 2
+        return [{"status": "seen", "streak": 1}]
+
+    def fallen(self):
+        return "the object located at (10, -10) on turn 1 has fallen over" if self.turns and self.turns[-1] >= self.fall_at else None
+
+
+class FakeLiveCapture:
+    def __init__(self, env, obs, turn):
+        self.turn = turn
+
+
+SCENE = [reply(["right move z +1"], scene="Cup at approx (10, -10), coaster at (-20, 5).")] + [reply(["right move z +1"])] * 6
+
+
+class MonitorTests(unittest.TestCase):
+    def setUp(self):
+        from branchlab.rtscene import live
+        patcher = patch.object(live, "LiveCapture", FakeLiveCapture)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_fall_ends_the_episode_before_that_turns_reply_runs(self):
+        mon = FakeMonitor(fall_at=3)
+        with tempfile.TemporaryDirectory() as tmp:
+            result, trace, _, client, env = run(relay.RelayAgent, SCENE, tmp=tmp, variant="baseline", monitor=lambda: mon)
+            log = json.loads((Path(tmp)/"run/episode_000/monitor.json").read_text())
+        self.assertEqual(mon.points, [(10.0, -10.0), (-20.0, 5.0)])
+        self.assertEqual((result.model_calls, result.turns, result.finished_reason), (3, 3, "monitor_fallen"))
+        self.assertEqual(result.monitor_stop["turn"], 3)
+        self.assertEqual((result.monitor_bound, result.monitor_calls), (2, 4))
+        self.assertEqual(trace[0]["monitor_bound"], [{"at": [10.0, -10.0]}, {"at": [-20.0, 5.0]}])
+        self.assertEqual((trace[-1]["commands"], trace[-1]["monitor_stop"][:10]), ([], "the object"))
+        self.assertEqual(env.arms["right"]["position_cm"][2], 97.0)          # two of the three replies ran
+        self.assertEqual([e["turn"] for e in log], [2, 3])
+
+    def test_a_quiet_monitor_changes_nothing_the_model_sees(self):
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            base = run(relay.RelayAgent, SCENE, max_turns=5, tmp=a, variant="baseline")
+            mon = run(relay.RelayAgent, SCENE, max_turns=5, tmp=b, variant="baseline", monitor=FakeMonitor)
+        self.assertEqual(base[3].prompts, mon[3].prompts)
+        self.assertEqual((mon[0].turns, mon[0].finished_reason), (5, "max_turns"))
+
+    def test_grasps_and_releases_reach_the_monitor(self):
+        mon = FakeMonitor()
+        script = [reply(["right point down", "right move x -10", "right move y +10"], scene="Cup at (10, -10)."),
+                  reply(["right move z -15", "right gripper close", "right gripper open"])]
+        with tempfile.TemporaryDirectory() as tmp:
+            run(relay.RelayAgent, script, max_turns=2, tmp=tmp, variant="baseline", monitor=lambda: mon)
+        self.assertEqual([g[0] for g in mon.grippers], ["close", "open"])
+        self.assertTrue(mon.grippers[0][3])                                  # the close caught the cup
+        self.assertEqual(mon.grippers[0][2][:2], (10.0, -10.0))
+
+    def test_off_for_tasks_that_turn_objects_on_purpose(self):
+        cfg = AgentConfig(max_turns=3)
+        agent = relay.RelayAgent(cfg, ScriptedClient([]), None, task="open_laptop", variant="baseline", monitor=FakeMonitor)
+        self.assertIsNone(agent.monitor_factory)
+
+    def test_a_broken_capture_is_logged_and_the_episode_goes_on(self):
+        from branchlab.rtscene import live
+
+        def broken(env, obs, turn):
+            raise RuntimeError("no Position picture")
+        with patch.object(live, "LiveCapture", broken), tempfile.TemporaryDirectory() as tmp:
+            result, *_ = run(relay.RelayAgent, SCENE, max_turns=3, tmp=tmp, variant="baseline", monitor=FakeMonitor)
+        self.assertEqual((result.turns, result.monitor_bound), (3, 0))
 
 
 class PlanParsingTests(unittest.TestCase):

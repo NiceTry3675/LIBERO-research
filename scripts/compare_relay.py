@@ -8,7 +8,8 @@ ROOT is an outputs directory holding robodawn/ (evaluation episodes 0-9: the bas
 gemini_flash_<tier> and the relay_* runs) and robodawn_dev/ (development episodes 10+, relay_* runs only,
 relay_baseline_* being the upstream loop); the default is this project's outputs/ plus every fetched
 outputs/robodawn_colab/<session>/. A run is labelled by its directory name and merged over shards and
-roots; an episode counts once. Only runs of --tier (default flex) are read.
+roots; an episode counts once. Only runs of --tier (default flex) are read, plus --also-tier; with runs of
+two tiers, --price-tier prices them alike (the tiers serve the same model; wall time still differs).
 
 Rows use only the episodes that every listed run finished, so they are paired. Per run: successes, turns,
 big-model calls, relayed steps, how relays ended, and per episode the big-model time, checker time, wall
@@ -20,7 +21,7 @@ Press tasks close on nothing on purpose; as in robodawn_relay.PRESS_TASKS, their
 
 Gemini prices are USD per 1M tokens for Gemini 3.8 Flash standard on Vertex as of 2026-10 (flex: half),
 as in compare_robodawn.py. Per episode, the cached share of the input is the run directory's. Clef's cost
-is what OpenRouter reported; the lite checker's needs --price-lite-input/--price-lite-output.
+is what OpenRouter reported (the object monitor's Workers AI calls: --price-clef-call each); the lite checker's needs --price-lite-input/--price-lite-output.
 """
 import argparse
 import json
@@ -56,9 +57,11 @@ def load(roots, dev, tasks, args):
     replies = defaultdict(Counter)       # label -> answered calls, calls cut off by the token budget, reasoning tokens
     for root in roots:
         base = root / ("robodawn_dev" if dev else "robodawn")
-        for run_dir in sorted([*base.glob(f"gemini_flash_{args.tier}"), *base.glob(f"relay_*_{args.tier}")]) \
+        tiers = [args.tier, *args.also_tier]
+        for run_dir in sorted(d for t in tiers for d in [*base.glob(f"gemini_flash_{t}"), *base.glob(f"relay_*_{t}")]) \
                 if base.is_dir() else []:
-            scale = 0.5 if args.tier == "flex" else 1.0
+            tier = run_dir.name.rsplit("_", 1)[-1]
+            scale = 0.5 if (args.price_tier or tier) == "flex" else 1.0
             for shard in sorted(run_dir.glob("*/shard_*")):
                 task = shard.parent.name
                 if tasks and task not in tasks or not (shard / "results.json").exists():
@@ -88,6 +91,7 @@ def load(roots, dev, tasks, args):
                     checker = (e.get("checker_cost_usd") or 0.0) + (lite and (
                         (e.get("checker_input_tokens") or 0) * (args.price_lite_input or 0)
                         + (e.get("checker_output_tokens") or 0) * (args.price_lite_output or 0)) / 1e6)
+                    checker += (e.get("monitor_calls") or 0) * args.price_clef_call     # the object monitor's Clef
                     runs[run_dir.name][key] = {**e, "gemini_cost": gemini, "checker_cost": checker,
                                                "checks": calls[name], "trace": shard / name / "trace.json"}
     return runs, repeated, replies
@@ -127,14 +131,16 @@ def row(label, eps):
     for e in eps:
         ends.update(e.get("relay_ends") or {})
     checks = sum(e.get("checker_calls") or 0 for e in eps)
+    stops = sum(e.get("finished_reason") == "monitor_fallen" for e in eps)
     return (f"{label:30} {sum(e['success'] for e in eps):>3}/{n:<3} {mean('turns'):>6.1f} {mean('model_calls'):>6.1f} "
             f"{mean('relayed_steps'):>6.1f} {mean('model_seconds'):>8.0f} {mean('checker_seconds'):>7.1f} "
             f"{mean('seconds'):>7.0f} {mean('gemini_cost'):>7.3f} {mean('checker_cost'):>7.4f} "
-            f"{checks:>6}  {dict(ends) if ends else ''}")
+            f"{checks:>6} {mean('monitor_calls'):>6.1f} {mean('monitor_wait_seconds'):>6.1f} {stops:>5}  "
+            f"{dict(ends) if ends else ''}")
 
 
 HEADER = (f"{'run':30} {'success':>7} {'turns':>6} {'calls':>6} {'relay':>6} {'model s':>8} {'check s':>7} "
-          f"{'wall s':>7} {'$gem':>7} {'$check':>7} {'checks':>6}  relay ends")
+          f"{'wall s':>7} {'$gem':>7} {'$check':>7} {'checks':>6} {'mon':>6} {'mon s':>6} {'stops':>5}  relay ends")
 
 
 def main():
@@ -142,6 +148,10 @@ def main():
     parser.add_argument("tasks", nargs="*")
     parser.add_argument("--dev", action="store_true", help="development episodes (outputs/robodawn_dev)")
     parser.add_argument("--tier", default="flex")
+    parser.add_argument("--also-tier", nargs="*", default=[],
+                        help="also read runs of these tiers (the model is the same; only queueing and price differ)")
+    parser.add_argument("--price-tier", choices=["flex", "standard"],
+                        help="price every run at this tier, so costs compare across tiers")
     parser.add_argument("--runs", type=Path, nargs="+",
                         default=[PROJECT / "outputs", *sorted((PROJECT / "outputs/robodawn_colab").glob("*"))])
     parser.add_argument("--labels", nargs="+", help="only these runs (directory names)")
@@ -152,6 +162,8 @@ def main():
     parser.add_argument("--price-output", type=float, default=3.75)
     parser.add_argument("--price-lite-input", type=float)
     parser.add_argument("--price-lite-output", type=float)
+    parser.add_argument("--price-clef-call", type=float, default=0.00022,
+                        help="USD per object-monitor Clef call on Workers AI (about 20 neurons at $0.011 per 1000)")
     args = parser.parse_args()
     runs, repeated, replies = load([r for r in args.runs if r.is_dir()], args.dev, set(args.tasks), args)
     if args.labels:

@@ -3,7 +3,8 @@
 #
 #   bash colab/robotwin/run_subset.sh [--tier flex] [--jobs 3] [--episodes 10] [--shard-size 5]
 #                                     [--part K/N] [--label NAME] [--force] [task ...]
-#   bash colab/robotwin/run_subset.sh --variant V [--checker C] [--start 24] [--max-tokens N] [same options] [task ...]
+#   bash colab/robotwin/run_subset.sh --variant V [--checker C] [--start 24] [--max-tokens N]
+#                                     [--monitor both|code|clef [--monitor-need N]] [same options] [task ...]
 #
 # Without tasks it runs the ten-task subset below, chosen so that the site's
 # success counts spread from 0 to 10 and both demonstration entries appear.
@@ -24,7 +25,8 @@
 # --variant runs scripts/run_robodawn_relay.py instead (baseline|prompt|open|checked; checked needs
 # --checker clef|lite) on episodes --start .. --start+episodes-1. Episodes 24-49 are development
 # episodes, written under outputs/robodawn_dev (12-23 hold the demonstrations' source seeds, which the
-# runner refuses); the smoke guard applies to the baseline runner only.
+# runner refuses); the smoke guard applies to the baseline runner only. --monitor adds the object monitor
+# (Clef on Workers AI; needs /content/.cloudflare_env from subset.sh setup).
 #
 # Progress: outputs/robodawn/subset_<tier>[_<label>]/status.tsv (relay: outputs/robodawn[_dev]/
 # subset_<run>[_<label>]/), one line per start, restart and end, one log per shard next to it.
@@ -35,6 +37,7 @@ py=${ROBODAWN_PYTHON:-/content/mamba/envs/rt/bin/python}
 export GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-/content/vertex_key.json}
 
 tier=flex; jobs=3; episodes=10; shard=5; part=1/1; label=; force=0; tasks=(); variant=; checker=; start=0; maxtok=
+monitor=; need=
 while [ $# -gt 0 ]; do
   case $1 in
     --tier) tier=$2; shift ;;
@@ -48,6 +51,8 @@ while [ $# -gt 0 ]; do
     --checker) checker=$2; shift ;;
     --start) start=$2; shift ;;
     --max-tokens) maxtok=$2; shift ;;
+    --monitor) monitor=$2; shift ;;
+    --monitor-need) need=$2; shift ;;
     -*) echo "unknown option: $1" >&2; exit 2 ;;
     *) tasks+=("$1") ;;
   esac
@@ -63,12 +68,15 @@ if [ -n "$variant" ]; then
     || { echo "run evaluation episodes (0-9) or development episodes (24-49); 10-23 overlap the demonstrations" >&2; exit 2; }
   out=$root/outputs/$([ "$start" -ge 10 ] && echo robodawn_dev || echo robodawn)
   runner="$root/scripts/run_robodawn_relay.py --variant $variant${checker:+ --checker $checker}${maxtok:+ --max-tokens $maxtok}"
+  runner+="${monitor:+ --monitor $monitor}${need:+ --monitor-need $need}"
   # the runner names the result directory (settings that differ from the defaults are part of the name)
   run=$("$py" $runner --task "${tasks[0]}" --start-episode "$start" --episodes 1 --tier "$tier" --dry-run \
         | "$py" -c 'import json,sys,pathlib; print(pathlib.Path(json.load(sys.stdin)["output"]).parents[1].name)') \
     || { echo "the relay runner refused these settings (see above)" >&2; exit 2; }
   [ "$checker" != clef ] || [ -s /content/.openrouter_key ] || { echo "no OpenRouter key at /content/.openrouter_key (subset.sh setup)" >&2; exit 1; }
+  [ -z "$monitor" ] || [ -s /content/.cloudflare_env ] || { echo "no Cloudflare credentials at /content/.cloudflare_env (subset.sh setup)" >&2; exit 1; }
 else
+  [ -z "$monitor" ] || { echo "--monitor applies to relay variants (use --variant baseline --monitor ...)" >&2; exit 2; }
   [ "$start" -eq 0 ] || { echo "the baseline runner covers episodes 0-9 only; use --variant baseline for others" >&2; exit 2; }
   [ -z "$maxtok" ] || { echo "--max-tokens applies to relay variants only (the baseline keeps 8000)" >&2; exit 2; }
   run=gemini_flash_$tier; out=$root/outputs/robodawn; runner="$root/scripts/run_robodawn_baseline.py"

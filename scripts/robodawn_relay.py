@@ -32,6 +32,7 @@ import re
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -54,6 +55,8 @@ LOST_OPENING = 0.05          # prompts.state_text's threshold for a held object 
 # Tasks whose demonstrations close the fingers on nothing on purpose, to press or push with them (their demo.json
 # effects say "nothing held"): there such a close is neither an empty grasp nor a reason to stop.
 PRESS_TASKS = {"click_bell", "click_alarmclock", "press_stapler", "turn_switch"}
+# tasks whose goal changes an object's pose on purpose: the object monitor would read success as a fall
+MONITOR_SKIP_TASKS = {"open_laptop", "adjust_bottle"}
 
 # Inserted into upstream's RESPONSE FORMAT block in place of its last line.
 FORMAT_LINE = '  "commands": ["<command>", ...]   // 1 to {n} commands, executed in order\n}}\n'
@@ -378,11 +381,18 @@ class RelayEpisodeResult(EpisodeResult):
     checker_output_tokens: int = 0
     empty_closes: int = 0         # closes that found nothing between the fingers, in any segment (none in press tasks)
     relay_ends: dict = field(default_factory=dict)   # why each relay ended: all_ran, check_failed, ...
+    monitor_bound: int = 0        # objects the monitor tracks (located in the big model's first reply)
+    monitor_calls: int = 0        # Clef calls by the monitor
+    monitor_seconds: float = 0.0  # time of the monitor's captures, parsing and calls (mostly beside the model call)
+    monitor_wait_seconds: float = 0.0  # time the episode waited for the monitor (its captures, and any check that
+                                       # outlasted the model call)
+    monitor_stop: dict = field(default_factory=dict)  # {turn, why} when the monitor ended the episode
 
 
 class RelayAgent(MLLMDiscreteAgent):
     def __init__(self, cfg, client, out_dir=None, task=None, *, variant: str = "baseline",
-                 checker: Optional[Checker] = None, max_steps: int = MAX_STEPS, empty_grasp_limit: int = 0):
+                 checker: Optional[Checker] = None, max_steps: int = MAX_STEPS, empty_grasp_limit: int = 0,
+                 monitor=None):
         if variant not in VARIANTS:
             raise ValueError(f"unknown variant {variant!r}")
         if variant == "checked" and checker is None:
@@ -393,6 +403,9 @@ class RelayAgent(MLLMDiscreteAgent):
         self.max_steps = max_steps
         self.empty_grasp_limit = empty_grasp_limit     # 0: off; else end the episode at that many empty closes
         self.press_task = task in PRESS_TASKS
+        # object monitor: a factory of branchlab.rtscene.monitor.ObjectMonitor (None: off)
+        self.monitor_factory = monitor if task not in MONITOR_SKIP_TASKS else None
+        self._monitor = None                  # the running episode's monitor, told about grasps by _execute
 
     # ------------------------------------------------------------------
     def _execute(self, env, commands, grasp_facts) -> tuple[list[dict], bool, int]:
@@ -412,12 +425,76 @@ class RelayAgent(MLLMDiscreteAgent):
             res = env.execute(cmd)
             results.append(res)
             _update_grasp_facts(grasp_facts, cmd, res)
+            if self._monitor is not None and cmd.kind == "gripper" and res.get("ok"):
+                self._note_gripper(cmd, res)
             if (not self.press_task and cmd.kind == "gripper" and cmd.value < 0.5 and res.get("ok")
                     and ((res.get("after") or {}).get(cmd.arm) or {}).get("gripper_real", 1.0) <= EMPTY_CLOSE_OPENING):
                 empty += 1
             if env.success or env.budget_exhausted:
                 break
         return results, done, empty
+
+    def _note_gripper(self, cmd, res) -> None:
+        """Tell the monitor where a close caught something, and where a gripper let go."""
+        after = ((res.get("after") or {}).get(cmd.arm) or {})
+        tcp = after.get("position_cm")
+        if not tcp:
+            return
+        try:
+            if cmd.value < 0.5:
+                self._monitor.note_close(cmd.arm, tcp, after.get("gripper_real", 0.0) > EMPTY_CLOSE_OPENING)
+            else:
+                self._monitor.note_open(cmd.arm, tcp)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("object monitor: could not note a gripper command: %s", exc)
+
+    def _monitor_capture(self, env, obs, turn, stats, log):
+        """The scene at this turn's start for the monitor (depth, cameras, arms), or None if it cannot be read."""
+        t0 = time.time()
+        try:
+            from branchlab.rtscene.live import LiveCapture
+            return LiveCapture(env, obs, turn)
+        except Exception as exc:  # noqa: BLE001  (the monitor must never end the episode)
+            log.append({"turn": turn, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
+            logger.warning("object monitor: no capture at turn %d: %s", turn, exc)
+            return None
+        finally:
+            stats["monitor_seconds"] += time.time() - t0
+            stats["monitor_wait_seconds"] += time.time() - t0
+
+    def _monitor_check(self, monitor, cap, turn, stats, log):
+        """Runs beside the model call: check the bound objects; a description of a fallen one, or None."""
+        t0 = time.time()
+        try:
+            rows = monitor.check(cap)
+            log.append({"turn": turn, "rows": rows})
+            return monitor.fallen()
+        except Exception as exc:  # noqa: BLE001
+            log.append({"turn": turn, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
+            logger.warning("object monitor failed at turn %d: %s", turn, exc)
+            return None
+        finally:
+            stats["monitor_seconds"] += time.time() - t0
+
+    @staticmethod
+    def _monitor_wait(monitor, future, stats):
+        t0 = time.time()
+        fallen = future.result()
+        stats["monitor_wait_seconds"] += time.time() - t0
+        stats["monitor_calls"] = monitor.calls
+        return fallen
+
+    def _monitor_bind(self, monitor, cap, parsed, stats) -> list:
+        t0 = time.time()
+        try:
+            from branchlab.rtscene.monitor import coordinates
+            bound = monitor.bind(cap, coordinates(str(parsed.get("scene") or "")))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("object monitor could not bind: %s", exc)
+            bound = [{"error": f"{type(exc).__name__}: {str(exc)[:200]}"}]
+        stats["monitor_bound"] = len(monitor.objects)
+        stats["monitor_seconds"] += time.time() - t0
+        return bound
 
     def _log_check(self, episode_dir, turn, step, questions_, verdict) -> None:
         if not self.out_dir:
@@ -453,14 +530,27 @@ class RelayAgent(MLLMDiscreteAgent):
         turn = 0
         stats = {"planned_steps": 0, "relayed_steps": 0, "checker_calls": 0, "checker_seconds": 0.0,
                  "checker_cost_usd": 0.0, "checker_input_tokens": 0, "checker_output_tokens": 0,
-                 "empty_closes": 0, "relay_ends": {}}
+                 "empty_closes": 0, "relay_ends": {}, "monitor_bound": 0, "monitor_calls": 0, "monitor_seconds": 0.0,
+                 "monitor_wait_seconds": 0.0, "monitor_stop": {}}
         report = ""          # what the relay did since the big model's last reply, shown in its next turn
+        monitor = self._monitor = self.monitor_factory() if self.monitor_factory else None
+        monitor_log: list[dict] = []
+        monitor_pool = ThreadPoolExecutor(1) if monitor is not None else None
+        first_capture = None
 
         demo_msgs = self.demo_msgs
         while turn < cfg.max_turns:
             turn += 1
             obs = env.observe()
             state = obs["state"]
+            pending = None
+            if monitor is not None:
+                cap = self._monitor_capture(env, obs, turn, stats, monitor_log)
+                if not monitor.objects:
+                    first_capture = cap             # bound once a reply has located the objects
+                elif cap is not None:
+                    # the check (parsing, Clef calls) runs while the big model thinks about the same scene
+                    pending = monitor_pool.submit(self._monitor_check, monitor, cap, turn, stats, monitor_log)
             if turn == 1 and self.task_demos:
                 shown = self._select_demos(state)
                 demo_msgs = self._messages_for(shown)
@@ -483,6 +573,15 @@ class RelayAgent(MLLMDiscreteAgent):
 
             record = {"turn": turn, "state": state, "prompt": text, "reply": reply.text, "latency_s": round(reply.latency_s, 2),
                       "error": reply.error, "commands": [], "results": []}
+            if pending is not None:
+                fallen = self._monitor_wait(monitor, pending, stats)
+                if fallen:
+                    # the object was already down when this turn began: its reply is not run
+                    record["monitor_stop"] = fallen
+                    trace.append(record)
+                    stats["monitor_stop"] = {"turn": turn, "why": fallen}
+                    finished_reason = "monitor_fallen"
+                    break
             if turn == 1 and self.task_demos:
                 record["demo"] = [_where(d) for d in shown]
             if reply.error:
@@ -517,6 +616,8 @@ class RelayAgent(MLLMDiscreteAgent):
             memory.update_scratchpad(parsed.get("memory"))
             record.update(scene=parsed.get("scene"), progress=parsed.get("progress"), plan=parsed.get("plan"),
                           memory=parsed.get("memory"), command_errors=errors)
+            if monitor is not None and first_capture is not None and not monitor.objects:
+                record["monitor_bound"] = self._monitor_bind(monitor, first_capture, parsed, stats)
             commands = commands[: cfg.max_commands_per_turn]
             lost_before = lost_arms(grasp_facts, state)
             results, done, empty = self._execute(env, commands, grasp_facts)
@@ -653,6 +754,13 @@ class RelayAgent(MLLMDiscreteAgent):
                     (episode_dir / f"final_{view.name}.png").write_bytes(encode_png(view.image))
             except Exception as exc:  # noqa: BLE001
                 logger.warning("could not save the final observation: %s", exc)
+        if monitor is not None:
+            monitor_pool.shutdown(wait=True)
+            stats["monitor_calls"] = monitor.calls
+            if episode_dir:
+                (episode_dir / "monitor.json").write_text(json.dumps(monitor_log, indent=1, default=_json_default))
+        stats["monitor_seconds"] = round(stats["monitor_seconds"], 1)
+        stats["monitor_wait_seconds"] = round(stats["monitor_wait_seconds"], 1)
         result = RelayEpisodeResult(
             success=env.success, turns=turn, steps_used=env.steps_used, step_limit=env.step_limit,
             finished_reason=finished_reason, seconds=round(time.time() - t_start, 1), model_seconds=round(model_seconds, 1),
