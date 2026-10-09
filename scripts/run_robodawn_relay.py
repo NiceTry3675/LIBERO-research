@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
-"""Run a relay variant of RoboDawn's harness (scripts/robodawn_relay.py) on Gemini through Vertex AI.
+"""Run a relay variant of RoboDawn's harness on Vertex or a direct OAuth backend.
 
-Everything but the agent loop is the baseline's (run_robodawn_baseline.py): the same model, client,
+OAuth example (dry run, no credential/GPU/network required):
+    python scripts/run_robodawn_relay.py --task adjust_bottle --variant baseline \
+        --backend openai-oauth --model gpt-6.1-sol --dry-run
+Use --backend anthropic-oauth --model <exact-Claude-model-ID> for Claude.
+See scripts/oauth_model.py --help for credential format and a one-request probe.
+OAuth --tier is ignored (the metadata records tier=oauth). Model and reasoning
+settings are isolated in separate output directories. GPT ignores --max-tokens;
+Claude defaults to 64000 and accepts --max-tokens as an override.
+
+With the default Vertex backend, everything but the agent loop is the baseline's (run_robodawn_baseline.py): the same model, client,
 tier, reasoning, demonstrations, scenes, cameras and limits. The variant decides what happens to the
 big model's planned steps:
 
@@ -40,6 +49,7 @@ from pathlib import Path
 
 from audit_robodawn import ENDPOINT, PROJECT, REASONING, ROBODAWN_COMMIT, ROBOTWIN_COMMIT, git
 from run_robodawn_baseline import MODEL, TEMPERATURE, TIERS, api_base, credentials_project, vertex_client
+import oauth_experiments
 
 VARIANTS = ("baseline", "prompt", "open", "checked")
 CHECKERS = {"clef": "cloudflare/clef", "lite": "google/gemini-3.1-flash-lite (minimal thinking)"}
@@ -99,6 +109,11 @@ def episode_plan(args) -> tuple[list[dict], bool]:
 
 
 def configuration(args) -> tuple[dict, list[str]]:
+    if getattr(args, "max_tokens", None) is None:
+        args.max_tokens = 64000 if getattr(args, "backend", "vertex") == "anthropic-oauth" else 8000
+    if args.max_tokens <= 0:
+        raise ValueError("--max-tokens must be positive")
+    oauth = oauth_experiments.settings(args)
     repo = args.repo.resolve()
     if git(repo, "rev-parse", "HEAD") != ROBODAWN_COMMIT:
         raise ValueError("RoboDawn checkout differs from the audited commit")
@@ -112,8 +127,10 @@ def configuration(args) -> tuple[dict, list[str]]:
     if any(not (repo/f"demos/robotwin2/primer/turn{n:03d}_agent_camera.png").is_file() for n in range(1, 7)):
         raise ValueError("Command primer images are missing")
     monitor, need = getattr(args, "monitor", "off"), getattr(args, "monitor_need", 2)
-    name = run_name(args.variant, args.checker, args.tier, args.threshold, args.max_steps, args.empty_grasp_limit,
-                    args.max_tokens, monitor, need)
+    name = run_name(args.variant, args.checker, "oauth" if oauth else args.tier, args.threshold, args.max_steps, args.empty_grasp_limit,
+                    DEFAULTS["max_tokens"] if oauth and oauth["backend"] != "anthropic-oauth" else args.max_tokens, monitor, need)
+    if oauth:
+        name += "_" + oauth["backend"] + "_" + oauth["model"] + "_" + (oauth["oauth"]["reasoning_effort"] or "default")
     output = (args.output.resolve() if args.output else
               PROJECT/("outputs/robodawn" if evaluation else "outputs/robodawn_dev")/name/args.task/f"shard_{args.start_episode}")
     relay = {"variant": args.variant, "checker": args.checker, "checker_model": CHECKERS.get(args.checker),
@@ -129,20 +146,21 @@ def configuration(args) -> tuple[dict, list[str]]:
               "task_config": "demo_randomized", "instruction_type": "unseen", "seed_base": 0,
               "cameras": ["agent_camera", "top_camera", "wrist"], "temperature": TEMPERATURE,
               "relay": relay, "robotwin_root": str(args.robotwin_root.resolve())}
+    config.update(oauth)
     config_path = output/"relay_config.json"
     if config_path.is_file():
         prior = json.loads(config_path.read_text())
         keys = ("robodawn_commit", "robotwin_commit", "task", "model", "endpoint", "tier", "reasoning", "max_turns",
-                "max_commands_per_turn", "max_tokens", "task_config", "instruction_type", "cameras", "relay")
-        if any(prior.get(k) != config[k] for k in keys):
+                "max_commands_per_turn", "max_tokens", "task_config", "instruction_type", "cameras", "relay", "backend", "oauth")
+        if any(prior.get(k) != config.get(k) for k in keys):
             raise ValueError("Existing output uses different conditions; choose another output")
     elif (output/"results.json").exists():
         raise ValueError("Existing output lacks relay metadata; choose another output")
     flags = ["--task", args.task, "--episodes", str(args.episodes), "--start_episode", str(args.start_episode),
              "--seed", "0", "--task_config", "demo_randomized", "--instruction_type", "unseen",
-             "--model", MODEL, "--max_turns", "45", "--max_commands_per_turn", "4",
-             "--max_tokens", str(args.max_tokens), "--timeout_s", str(TIERS[args.tier]["timeout_s"]),
-             "--stall_timeout", str(TIERS[args.tier]["stall_timeout_s"]),
+             "--model", config["model"], "--max_turns", "45", "--max_commands_per_turn", "4",
+             "--max_tokens", str(args.max_tokens), "--timeout_s", str(config["timeout_s"]),
+             "--stall_timeout", str(config["stall_timeout_s"]),
              "--cameras", "agent_camera,top_camera,wrist", "--label", name, "--output", str(output)]
     if args.no_video:
         flags += ["--no_video"]
@@ -158,7 +176,7 @@ def check_results(config: dict) -> dict:
     output = Path(config["output"])
     results = json.loads((output/"results.json").read_text())
     errors = []
-    if results.get("task") != config["task"] or results.get("model") != MODEL or results.get("task_config") != "demo_randomized":
+    if results.get("task") != config["task"] or results.get("model") != config["model"] or results.get("task_config") != "demo_randomized":
         errors.append("Result task/model/scene configuration differs")
     for expected in config["episodes"]:
         actual = next((e for e in results["episodes"] if e["episode_index"] == expected["episode"]), None)
@@ -174,15 +192,18 @@ def check_results(config: dict) -> dict:
                 errors.append(f"episode {expected['episode']}: different demonstration entry")
     calls = read_jsonl(output/"llm_calls.jsonl")
     reasoning = [(c.get("usage", {}).get("completion_tokens_details") or {}).get("reasoning_tokens") for c in calls]
-    if not any(isinstance(n, (int, float)) and n > 0 for n in reasoning):
-        errors.append("No positive reasoning token usage was reported; reasoning is unverified")
-    answered = [t for t in read_jsonl(output/"transport.jsonl") if t["status"] == 200]
-    if not answered or any(not str(t.get("response_model")).startswith(MODEL) for t in answered):
-        errors.append("Returned model is missing or differs from the requested Vertex model")
-    if any(t.get("traffic_type") != TIERS[config["tier"]]["traffic"] for t in answered):
-        errors.append(f"Some requests were not served as {TIERS[config['tier']]['traffic']} traffic")
-    if any(t.get("reasoning_fields") for t in read_jsonl(output/"transport.jsonl")):
-        errors.append("Reasoning fields were sent; the runs use the model default")
+    if config.get("oauth"):
+        errors.extend(oauth_experiments.condition_errors(config, read_jsonl(output/"transport.jsonl")))
+    else:
+        if not any(isinstance(n, (int, float)) and n > 0 for n in reasoning):
+            errors.append("No positive reasoning token usage was reported; reasoning is unverified")
+        answered = [t for t in read_jsonl(output/"transport.jsonl") if t["status"] == 200]
+        if not answered or any(not str(t.get("response_model")).startswith(MODEL) for t in answered):
+            errors.append("Returned model is missing or differs from the requested Vertex model")
+        if any(t.get("traffic_type") != TIERS[config["tier"]]["traffic"] for t in answered):
+            errors.append(f"Some requests were not served as {TIERS[config['tier']]['traffic']} traffic")
+        if any(t.get("reasoning_fields") for t in read_jsonl(output/"transport.jsonl")):
+            errors.append("Reasoning fields were sent; the runs use the model default")
     checks = read_jsonl(output/"checker_calls.jsonl")
     failed = sum(1 for c in checks if c.get("error"))
     if failed > len(checks) / 2:
@@ -257,6 +278,7 @@ def preflight(checker) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    oauth_experiments.add_arguments(parser)
     parser.add_argument("--task", required=True)
     parser.add_argument("--variant", choices=VARIANTS, required=True)
     parser.add_argument("--checker", choices=sorted(CHECKERS))
@@ -265,7 +287,8 @@ def main():
     parser.add_argument("--empty-grasp-limit", type=int, default=0,
                         help="end an episode at this many empty closes (0: off; its effect can also be read off "
                              "the traces by truncation, compare_relay.py --empty-grasp-limit)")
-    parser.add_argument("--max-tokens", type=int, default=8000, help="reply budget per call, reasoning included")
+    parser.add_argument("--max-tokens", type=int,
+                        help="Reply budget including reasoning: Vertex default 8000, Claude default 64000; ignored for GPT")
     parser.add_argument("--episodes", type=int, default=1)
     parser.add_argument("--start-episode", type=int, default=0)
     parser.add_argument("--repo", type=Path, default=PROJECT/"third_party/robodawn")
@@ -290,9 +313,10 @@ def main():
         raise ValueError("RoboTwin checkout differs from the pinned benchmark commit")
     if not (args.robotwin_root/"assets/background_texture").is_dir():
         raise ValueError("Randomized evaluation needs background textures; bootstrap with --textures")
-    if not args.credentials or not Path(args.credentials).is_file():
-        raise ValueError("Pass --credentials or set GOOGLE_APPLICATION_CREDENTIALS to the service account key")
-    credentials = Path(args.credentials).resolve()
+    needs_vertex = args.backend == "vertex" or args.checker == "lite"
+    if needs_vertex and (not args.credentials or not Path(args.credentials).is_file()):
+        raise ValueError("The Vertex model/lite checker needs --credentials or GOOGLE_APPLICATION_CREDENTIALS")
+    credentials = Path(args.credentials).resolve() if needs_vertex else None
     os.environ["ROBOTWIN_ROOT"] = str(args.robotwin_root.resolve())
     sys.path.insert(0, str(args.repo.resolve()))
     from harness import run_robotwin_eval
@@ -303,14 +327,27 @@ def main():
         preflight(checker)
     monitor = (monitor_factory(args.monitor, args.monitor_need, cloudflare_env(args.cloudflare_env))
                if args.monitor != "off" else None)
-    run_robotwin_eval.ChatClient = vertex_client(run_robotwin_eval.ChatClient, credentials, args.tier)
+    if config.get("oauth"):
+        keep = {k: os.environ.get(k) for k in ("MUJOCO_GL", "PYOPENGL_PLATFORM", "LIBERO_CONFIG_PATH")}
+        sys.path.insert(0, str(PROJECT/"src"))
+        from branchlab.oauth import oauth_client, Credentials
+        for key, value in keep.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        Credentials(args.backend, args.oauth_credentials).get()
+        run_robotwin_eval.ChatClient = oauth_client(run_robotwin_eval.ChatClient, args.backend,
+                                                    args.oauth_credentials, args.reasoning_effort, args.max_tokens)
+    else:
+        run_robotwin_eval.ChatClient = vertex_client(run_robotwin_eval.ChatClient, credentials, args.tier)
     run_robotwin_eval.MLLMDiscreteAgent = functools.partial(
         relay.RelayAgent, variant=args.variant, checker=checker, max_steps=args.max_steps,
         empty_grasp_limit=args.empty_grasp_limit, monitor=monitor)
     Path(config["output"]).mkdir(parents=True, exist_ok=True)
     (Path(config["output"])/"relay_config.json").write_text(json.dumps(config, indent=2)+"\n")
     sys.argv = [str(args.repo/"harness/run_robotwin_eval.py"), *flags,
-                "--api_base", api_base(credentials_project(credentials))]
+                "--api_base", config["endpoint"] if config.get("oauth") else api_base(credentials_project(credentials))]
     run_robotwin_eval.main()
     report = check_results(config)
     print(json.dumps(report, indent=2))

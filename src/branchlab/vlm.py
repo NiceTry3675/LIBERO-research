@@ -12,6 +12,11 @@ backend="vertex" calls Gemini on Vertex AI directly (native generateContent,
 service account key from $GOOGLE_APPLICATION_CREDENTIALS) instead of going
 through OpenRouter. It sends no thinking settings, so the model thinks at its
 default level, as in the RoboDawn baseline; `think` is ignored there.
+
+backend="openai-oauth", "openai-codex-oauth" or "anthropic-oauth" uses direct
+OAuth HTTP (see branchlab.oauth). Pass an explicit model and optionally
+oauth_credentials=Path(...) and reasoning_effort="high". With OAuth, think=False
+leaves reasoning at the provider default; it does not claim to disable it.
 """
 
 import json
@@ -76,9 +81,16 @@ def to_answers(reply: dict, questions):
 
 
 class VLM:
-    def __init__(self, cache_path=None, max_retries=6, backend="openrouter"):
+    def __init__(self, cache_path=None, max_retries=6, backend="openrouter", oauth_credentials=None,
+                 reasoning_effort=None, oauth_max_tokens=64000):
         self.backend = backend
-        if backend == "vertex":
+        self.reasoning_effort = reasoning_effort
+        self.oauth_max_tokens = oauth_max_tokens
+        self._oauth = None
+        if backend in ("openai-oauth", "openai-codex-oauth", "anthropic-oauth"):
+            from branchlab.oauth import Credentials, OAuthTransport
+            self._oauth = OAuthTransport(backend, Credentials(backend, oauth_credentials))
+        elif backend == "vertex":
             import os
             from google.oauth2 import service_account
             key = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
@@ -87,8 +99,10 @@ class VLM:
             self._project = json.loads(Path(key).read_text())["project_id"]
             self._credentials = service_account.Credentials.from_service_account_file(
                 key, scopes=["https://www.googleapis.com/auth/cloud-platform"])
-        else:
+        elif backend == "openrouter":
             self._token = _load_env()["OPENROUTER_API_KEY"]
+        else:
+            raise ValueError("Unknown VLM backend")
         self.max_retries = max_retries
         self.cache_path = Path(cache_path) if cache_path else None
         self._cache = {}
@@ -99,8 +113,14 @@ class VLM:
                 self._cache[row["key"]] = row["result"]
 
     def ask(self, state, questions, images=(), model="google/gemini-3.1-flash-lite", key=None, think=False):
+        if self._oauth and key is not None:
+            # OAuth experiments must not reuse a Gemini/other-effort answer.
+            key = json.dumps(["oauth-v4", self.backend, model, self.reasoning_effort, think,
+                              self.oauth_max_tokens if self.backend == "anthropic-oauth" else None, key])
         if key is not None and key in self._cache:
             return self._cache[key]
+        if self._oauth:
+            return self._store(key, self._ask_oauth(state, questions, images, model, think))
         if self.backend == "vertex":
             return self._store(key, self._ask_vertex(state, questions, images, model))
         content = [{"type": "text", "text": render(state, questions)}]
@@ -150,6 +170,40 @@ class VLM:
                   "latency": time.time() - start, "raw": raw[:500], "reasoning": effort,
                   "provider": out.get("provider")}
         return self._store(key, result)
+
+    def _ask_oauth(self, state, questions, images, model, think):
+        from branchlab.oauth import OAuthError
+        body = {"model": model,
+                "messages": [{"role": "system", "content": SYSTEM},
+                             {"role": "user", "content": [{"type": "text", "text": render(state, questions)}] +
+                              [{"type": "image_url", "image_url": {"url": uri}} for uri in images]}]}
+        effort = self.reasoning_effort or ("medium" if think else None)
+        if self.backend == "anthropic-oauth":
+            body["max_tokens"] = self.oauth_max_tokens
+        if effort:
+            body["reasoning_effort"] = effort
+        start = time.monotonic()
+        for attempt in range(max(1, self.max_retries)):
+            try:
+                out = self._oauth.send(body)
+                break
+            except OAuthError as exc:
+                if exc.status not in (0, 408, 429, 500, 502, 503, 504, 529) or attempt + 1 >= self.max_retries:
+                    raise
+                time.sleep(min(30, 2 ** attempt))
+        raw = out["choices"][0]["message"]["content"]
+        try:
+            reply = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+            if not isinstance(reply, dict):
+                reply = {}
+        except ValueError:
+            reply = {}
+        return {"answers": to_answers(reply, questions), "raw": raw[:500], "usage": out["usage"],
+                "latency": time.monotonic() - start, "provider": self.backend,
+                "response_model": out.get("model"), "reasoning": effort or "provider default",
+                "output_token_limit": out.get("output_token_limit"),
+                "request_profile": out.get("request_profile"),
+                "max_output_tokens_sent": self.backend == "anthropic-oauth"}
 
     def _store(self, key, result):
         if key is not None and self.cache_path:
