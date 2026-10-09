@@ -51,8 +51,8 @@ def image_uri(path) -> str:
 
 
 class Clef:
-    def __init__(self, cache_path=None, max_retries=6, backend="openrouter"):
-        env = _load_env()
+    def __init__(self, cache_path=None, max_retries=6, backend="openrouter", env_path=None):
+        env = _load_env(env_path) if env_path else _load_env()
         self.backend = backend
         if backend == "workers":
             self._token = env["CLOUDFLARE_AUTH_TOKEN"]

@@ -1,5 +1,7 @@
 # Clef 오프라인 실험 보고서
 
+> **2026-10-09 정정:** 이 보고서의 Clef 결과 가운데 이미지가 들어간 것은 전부 무효다. OpenRouter를 거친 Clef 호출에는 이미지가 전달되지 않았다(빨강/파랑 단색 이미지에 같은 답). Workers AI로 직접 다시 잰 결과는 [Clef_객체_모니터_결과.md](Clef_객체_모니터_결과.md)에 있다.
+
 Oct 7, 2026 · 코드는 아직 커밋하지 않음 (`src/branchlab/clef.py`, `src/branchlab/vlm.py`, `scripts/clef_offline.py`, `scripts/clef_servo_offline.py`)
 
 분기 실험 파일럿의 결과는 [파일럿_보고서.md](파일럿_보고서.md)에 따로 있다. 이 보고서는 그 뒤에 진행한, 결정 모델 Clef를 빠른 실행기로 쓸 수 있는지에 대한 오프라인 시험을 정리한다.

@@ -31,6 +31,7 @@ import argparse
 import collections
 import io
 import json
+import os
 import math
 import random
 from concurrent.futures import ThreadPoolExecutor
@@ -90,7 +91,10 @@ def jpeg_uri(path, size=None):
 
 def ask_all(jobs, workers):
     """jobs: (key, model, state, questions, images); returns {key: result or None}."""
-    clients = {"clef": Clef(cache_path=OUT / "responses_judgment.jsonl")}
+    # CLEF_BACKEND=workers: Cloudflare Workers AI directly (OpenRouter does not pass images to Clef), own cache
+    backend = os.environ.get("CLEF_BACKEND", "openrouter")
+    clients = {"clef": Clef(cache_path=OUT / ("responses_judgment.jsonl" if backend == "openrouter"
+                                              else f"responses_judgment_{backend}.jsonl"), backend=backend)}
     if any(j[1] == GEMINI for j in jobs):
         clients["gemini"] = VLM(cache_path=OUT / "responses_judgment_gemini.jsonl", backend="vertex")
 
