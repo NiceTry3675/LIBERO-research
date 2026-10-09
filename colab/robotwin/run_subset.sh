@@ -9,8 +9,9 @@
 # Without tasks it runs the ten-task subset below, chosen so that the site's
 # success counts spread from 0 to 10 and both demonstration entries appear.
 # Each task's episodes are split into shards of --shard-size episodes, one
-# process per shard, at most --jobs at once (about 8 GB of GPU memory each:
-# 3 on a 24 GB L4, about 9 on an 80 GB A100). Splitting matters because the
+# process per shard, at most --jobs at once (8 GB of GPU memory each at first, growing to 13-15 GB over
+# long episodes: 3 on a 24 GB L4, 2 on a 40 GB A100; 4 on a 40 GB A100 made shards fail at start with
+# "cannot import name 'CuroboPlanner'", 2026-10-09). Splitting matters because the
 # slowest task would otherwise run all its episodes in a row; the shards with
 # the most expected turns (the site's) start first. Runs resume: finished
 # episodes are skipped, so the script can be started again after a disconnect.

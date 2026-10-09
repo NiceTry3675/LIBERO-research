@@ -161,6 +161,14 @@ class StopLogic(unittest.TestCase):
         self.assertTrue(row["upright"] and row["code"] > monitor.CODE_THR)
         self.assertIsNone(self.mon.fallen())
 
+    def test_a_flat_object_never_counts_as_fallen(self):
+        self.mon.bind(self.capture(blob(1, 0, 0, 2.4, 18, 5)), [(0.0, 0.0)])   # a remote lying flat
+        self.p_fallen = 0.9
+        for k in range(3):                         # the track jumps to something three times as tall
+            row = self.mon.check(self.capture(blob(10 + k, 1, 0, 7.2, 12, 8)))[0]
+        self.assertTrue(row["code"] > monitor.CODE_THR and not row["can_fall"])
+        self.assertIsNone(self.mon.fallen())
+
     def test_coordinates_on_a_fingertip_are_not_bound(self):
         cap = self.capture(blob(1, 0, 0, 10, 4, 4), blob(2, -40, -28, 3, 4, 4))
         self.assertEqual(len(self.mon.bind(cap, [(0.0, 0.0), (-40.0, -30.0)])), 1)

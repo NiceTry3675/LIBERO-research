@@ -188,9 +188,10 @@ def report(code_thr: float, rows_name: str = "rows.jsonl"):
     policies = {
         "code": lambda r: agree(r) and r["code"] > code_thr,
         "clef": lambda r: agree(r) and (r.get("clef") or 0) >= 0.5,
-        "code & clef (monitor)": lambda r: agree(r) and r["code"] > code_thr and (r.get("clef") or 0) >= 0.5 and not r.get("upright"),
+        "code & clef (monitor)": lambda r: agree(r) and r["code"] > code_thr and (r.get("clef") or 0) >= 0.5
+        and r.get("can_fall", True) and not r.get("upright"),
         "code & clef, no height veto": lambda r: agree(r) and r["code"] > code_thr and (r.get("clef") or 0) >= 0.5,
-        "code, height veto": lambda r: agree(r) and r["code"] > code_thr and not r.get("upright"),
+        "code, height veto": lambda r: agree(r) and r["code"] > code_thr and r.get("can_fall", True) and not r.get("upright"),
         "clef, height veto": lambda r: agree(r) and (r.get("clef") or 0) >= 0.5 and not r.get("upright"),
         "code & clef, any pick": lambda r: r["code"] > code_thr and (r.get("clef") or 0) >= 0.5,
         "code & clef, Clef sure": lambda r: agree(r) and r["code"] > code_thr and (r.get("clef") or 0) >= 0.5 and r.get("clef_p", 0) >= 0.8,

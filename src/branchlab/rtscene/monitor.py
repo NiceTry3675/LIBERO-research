@@ -11,8 +11,9 @@ bound object that no arm is near:
          prior. The pick moves the track when its fused probability is at least 0.5 and Clef's own choice is the
          same tile; a check counts towards a fall only then.
   check  the code's shape-change score of the pick against the first turn, and Clef on the start and now crops
-         from the front with the depth numbers in the text: has it fallen over? An object taller than wide that
-         still stands at 90% of its height has not, whatever the scores say.
+         from the front with the depth numbers in the text: has it fallen over? Only objects that stand taller
+         than their narrower side can fall; one that still stands at 90% of its height has not, whatever the
+         scores say.
 
 The harness also tells the monitor about grasps and releases: an object a closing gripper caught (fingertips
 within 8 cm of it) is searched for, after the release, around where the fingers opened, not where it was.
@@ -210,11 +211,12 @@ class ObjectMonitor:
         if p_pick >= SURE and ans.get("choice") == pick:     # Clef itself must name the same tile
             obj.last, obj.search = now, None
         row["code"] = round(shape_change(now, obj.ref), 3)
-        # an object taller than it is wide that still stands at its full height has not fallen, whatever its
-        # footprint does (a neighbour it now touches merges into its blob)
-        tall = obj.ref.h95 > 1.2 * min(obj.ref.length, obj.ref.width)
-        row.update(h_ref=round(obj.ref.h95, 1), h_now=round(now.h95, 1),
-                   upright=bool(tall and now.h95 >= 0.9 * obj.ref.h95))
+        # only an object standing taller than its narrower side can fall over (a remote lying flat cannot); one
+        # that still stands at its full height has not, whatever its footprint does (a neighbour it now touches
+        # merges into its blob)
+        can_fall = obj.ref.h95 > min(obj.ref.length, obj.ref.width)
+        row.update(h_ref=round(obj.ref.h95, 1), h_now=round(now.h95, 1), can_fall=bool(can_fall),
+                   upright=bool(can_fall and now.h95 >= 0.9 * obj.ref.h95))
         if self.ask is None:
             return row
         half_t = half_for(obj.ref, now)
@@ -228,7 +230,7 @@ class ObjectMonitor:
 
     def flagged(self, row: dict) -> bool:
         if (row.get("status") != "seen" or "code" not in row or row.get("clef_choice") != row.get("pick")
-                or row.get("upright")):
+                or not row.get("can_fall") or row.get("upright")):
             return False
         code = row["code"] > self.code_thr
         clef = row.get("clef", 0.0) >= self.clef_thr
