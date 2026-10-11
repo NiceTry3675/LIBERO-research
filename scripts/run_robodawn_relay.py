@@ -29,13 +29,19 @@ episodes 12-23 for the subset tasks; episodes 24-49 are free of them).
         --start-episode 24 --episodes 5
 
 The result directory is relay_<variant>[_<checker>][_t<threshold>][_s<max steps>][_g<empty grasp
-limit>][_m<reply tokens>]_<tier>, the optional parts only when they differ from the defaults, so runs
-with different settings never merge. --max-tokens raises the reply budget (default 8000, the baseline's):
+limit>][_mon<monitor><need>][_gate<mode>[<threshold>]][_note<note>][_m<reply tokens>]_<tier>, the optional parts
+only when they differ from the defaults, so runs with different settings never merge. --max-tokens raises the reply budget (default 8000, the baseline's):
 the relay prompt makes Gemini think longer, and a reply cut off by the budget loses its turn.
 
 The Clef checker reads the OpenRouter key from --openrouter-key-file (default /content/.openrouter_key on
 the VM, which subset.sh setup uploads), else from OPENROUTER_API_KEY in the project .env; the lite
-checker uses the Vertex service account key. Keys are never logged. Use --dry-run to inspect the
+checker uses the Vertex service account key. Keys are never logged.
+
+For the toe study (reports/앞코_경고_라이브AB_설계.md, with --variant baseline): --gate clef asks Clef (Workers AI,
+like --monitor) before an open of an arm that holds a shoe whether the toe points left, and holds the open back
+once per hold when P(not left) >= --gate-threshold (default 0.8); --gate nudge holds it back once with a generic
+reminder and no Clef call; --task-note shoe-left adds to place_shoe's instruction that the toe must point left.
+Both act in place_shoe and place_dual_shoes only (the note in place_shoe only). Use --dry-run to inspect the
 configuration without a GPU, key or model call.
 """
 from __future__ import annotations
@@ -57,17 +63,23 @@ EVAL_EPISODES = 10      # episodes 0-9 are the evaluation episodes with site res
 SEEDS = 50              # valid seeds shipped per task
 
 
-DEFAULTS = {"threshold": 0.5, "max_steps": 3, "empty_grasp_limit": 0, "max_tokens": 8000}
+DEFAULTS = {"threshold": 0.5, "max_steps": 3, "empty_grasp_limit": 0, "max_tokens": 8000, "gate_threshold": 0.8}
 MONITOR_POLICIES = ("off", "both", "code", "clef")
+GATE_MODES = ("off", "clef", "nudge")
+TASK_NOTES = ("shoe-left",)          # robodawn_relay.TASK_NOTES
 
 
 def run_name(variant: str, checker: str | None, tier: str, threshold: float = 0.5, max_steps: int = 3,
-             empty_grasp_limit: int = 0, max_tokens: int = 8000, monitor: str = "off", monitor_need: int = 2) -> str:
+             empty_grasp_limit: int = 0, max_tokens: int = 8000, monitor: str = "off", monitor_need: int = 2,
+             gate: str = "off", gate_threshold: float = 0.8, task_note: str | None = None) -> str:
     return (f"relay_{variant}" + (f"_{checker}" if variant == "checked" else "")
             + (f"_t{threshold:g}" if variant == "checked" and threshold != DEFAULTS["threshold"] else "")
             + (f"_s{max_steps}" if max_steps != DEFAULTS["max_steps"] else "")
             + (f"_g{empty_grasp_limit}" if empty_grasp_limit != DEFAULTS["empty_grasp_limit"] else "")
             + (f"_mon{monitor}{monitor_need}" if monitor != "off" else "")
+            + (f"_gate{gate}" if gate != "off" else "")
+            + (f"{gate_threshold:g}" if gate == "clef" and gate_threshold != DEFAULTS["gate_threshold"] else "")
+            + (f"_note{task_note}" if task_note else "")
             + (f"_m{max_tokens}" if max_tokens != DEFAULTS["max_tokens"] else "")
             + f"_{tier}")
 
@@ -127,8 +139,15 @@ def configuration(args) -> tuple[dict, list[str]]:
     if any(not (repo/f"demos/robotwin2/primer/turn{n:03d}_agent_camera.png").is_file() for n in range(1, 7)):
         raise ValueError("Command primer images are missing")
     monitor, need = getattr(args, "monitor", "off"), getattr(args, "monitor_need", 2)
+    gate, gate_threshold = getattr(args, "gate", "off"), getattr(args, "gate_threshold", DEFAULTS["gate_threshold"])
+    note = getattr(args, "task_note", None)
+    if gate not in GATE_MODES or not 0.0 < gate_threshold <= 1.0:
+        raise ValueError("--gate is off, clef or nudge, and --gate-threshold lies in (0, 1]")
+    if note is not None and note not in TASK_NOTES:
+        raise ValueError(f"--task-note is one of {', '.join(TASK_NOTES)}")
     name = run_name(args.variant, args.checker, "oauth" if oauth else args.tier, args.threshold, args.max_steps, args.empty_grasp_limit,
-                    DEFAULTS["max_tokens"] if oauth and oauth["backend"] != "anthropic-oauth" else args.max_tokens, monitor, need)
+                    DEFAULTS["max_tokens"] if oauth and oauth["backend"] != "anthropic-oauth" else args.max_tokens, monitor, need,
+                    gate, gate_threshold, note)
     if oauth:
         name += "_" + oauth["backend"] + "_" + oauth["model"] + "_" + (oauth["oauth"]["reasoning_effort"] or "default")
     output = (args.output.resolve() if args.output else
@@ -137,7 +156,12 @@ def configuration(args) -> tuple[dict, list[str]]:
              "threshold": args.threshold if args.variant == "checked" else None, "max_steps": args.max_steps,
              "empty_grasp_limit": args.empty_grasp_limit, "turns_count_relayed_steps": True,
              **({"monitor": {"policy": monitor, "need": need, "model": "cloudflare/clef (Workers AI)"}}
-                if monitor != "off" else {})}
+                if monitor != "off" else {}),
+             **({"gate": {"mode": gate, "threshold": gate_threshold if gate == "clef" else None,
+                          "tasks": ["place_dual_shoes", "place_shoe"],
+                          "model": "cloudflare/clef (Workers AI)" if gate == "clef" else None}}
+                if gate != "off" else {}),
+             **({"task_note": note} if note else {})}
     config = {"robodawn_commit": ROBODAWN_COMMIT, "robotwin_commit": ROBOTWIN_COMMIT, "task": args.task,
               "episodes": episodes, "evaluation": evaluation, "output": str(output), "model": MODEL,
               "endpoint": ENDPOINT, "tier": args.tier, "timeout_s": TIERS[args.tier]["timeout_s"],
@@ -238,33 +262,54 @@ def cloudflare_env(path: Path | None) -> Path:
         return path
     if (PROJECT/".env").is_file():
         return PROJECT/".env"
-    raise ValueError("the object monitor needs the Cloudflare account id and token (--cloudflare-env)")
+    raise ValueError("the object monitor and the release gate need the Cloudflare account id and token (--cloudflare-env)")
 
 
-def monitor_factory(policy: str, need: int, env_path: Path):
-    """A factory of object monitors that ask Clef on Workers AI (where Clef sees images), checked once here."""
-    import os as _os
-    keep = {k: _os.environ.get(k) for k in ("MUJOCO_GL", "PYOPENGL_PLATFORM", "LIBERO_CONFIG_PATH")}
+def branchlab(*modules: str) -> list:
+    """branchlab modules, imported without the LIBERO rendering defaults branchlab sets on import."""
+    import importlib
+    keep = {k: os.environ.get(k) for k in ("MUJOCO_GL", "PYOPENGL_PLATFORM", "LIBERO_CONFIG_PATH")}
     sys.path.insert(0, str(PROJECT/"src"))
-    from branchlab.clef import Clef
-    from branchlab.rtscene import monitor, robot_model
-    for k, v in keep.items():                  # branchlab sets LIBERO's rendering defaults on import; undo them
+    imported = [importlib.import_module(f"branchlab.{m}") for m in modules]
+    for k, v in keep.items():
         if v is None:
-            _os.environ.pop(k, None)
+            os.environ.pop(k, None)
         else:
-            _os.environ[k] = v
-    clef = Clef(backend="workers", env_path=env_path)
-    boxes = robot_model.load()
+            os.environ[k] = v
+    return imported
+
+
+def workers_clef(env_path: Path, user: str, max_retries: int = 6):
+    """ask(state, questions, images) -> answers of Clef on Workers AI (where Clef sees images), checked once here
+    on a red image."""
+    clef_mod, render = branchlab("clef", "rtscene.render")
+    clef = clef_mod.Clef(backend="workers", env_path=env_path, max_retries=max_retries)
 
     def ask(state, questions, images):
         return clef.ask(state, questions, images)["answers"]
     from PIL import Image
-    red = monitor.render.jpeg_uri(Image.new("RGB", (64, 48), (220, 20, 20)))
+    red = render.jpeg_uri(Image.new("RGB", (64, 48), (220, 20, 20)))
     p = ask("A test image.", {"red": {"type": "noul", "instructions": "Is this image mostly red?"}}, [red])["red"]["noul"]
     if p < 0.5:
         raise RuntimeError(f"Clef on Workers AI does not see the test image (P(red) {p:.2f})")
-    print(f"object monitor: Clef answers P(red) {p:.2f} on a red image")
+    print(f"{user}: Clef answers P(red) {p:.2f} on a red image")
+    return ask
+
+
+def monitor_factory(policy: str, need: int, env_path: Path):
+    """A factory of object monitors that ask Clef on Workers AI (where Clef sees images), checked once here."""
+    ask = workers_clef(env_path, "object monitor")
+    monitor, robot_model = branchlab("rtscene.monitor", "rtscene.robot_model")
+    boxes = robot_model.load()
     return lambda: monitor.ObjectMonitor(ask, boxes, policy=policy, need=need)
+
+
+def release_gate(mode: str, threshold: float, env_path: Path | None):
+    """The release gate: in clef mode it asks Clef on Workers AI (checked once here; fewer retries than the monitor's,
+    so that an unreachable Clef delays an open by minutes, not a quarter of an hour, before the open runs anyway)."""
+    gate, = branchlab("rtscene.release_gate")
+    ask = workers_clef(env_path, "release gate", max_retries=3) if mode == "clef" else None
+    return gate.ReleaseGate(mode, ask, threshold)
 
 
 def preflight(checker) -> None:
@@ -301,6 +346,13 @@ def main():
     parser.add_argument("--monitor", choices=MONITOR_POLICIES, default="off",
                         help="object monitor: end the episode when a located object has fallen (code, Clef or both)")
     parser.add_argument("--monitor-need", type=int, default=2, help="flagged checks in a row before the monitor stops")
+    parser.add_argument("--gate", choices=GATE_MODES, default="off",
+                        help="release gate in the shoe tasks: Clef checks the toe before an open (clef), or a generic "
+                             "reminder holds the first open back (nudge)")
+    parser.add_argument("--gate-threshold", type=float, default=DEFAULTS["gate_threshold"],
+                        help="P(toe not left) at which the clef gate holds an open back")
+    parser.add_argument("--task-note", choices=TASK_NOTES,
+                        help="shoe-left: place_shoe's instruction adds that the toe must point left (-x)")
     parser.add_argument("--cloudflare-env", type=Path, default=Path("/content/.cloudflare_env"))
     parser.add_argument("--no-video", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -327,6 +379,8 @@ def main():
         preflight(checker)
     monitor = (monitor_factory(args.monitor, args.monitor_need, cloudflare_env(args.cloudflare_env))
                if args.monitor != "off" else None)
+    gate = (release_gate(args.gate, args.gate_threshold, cloudflare_env(args.cloudflare_env) if args.gate == "clef" else None)
+            if args.gate != "off" else None)
     if config.get("oauth"):
         keep = {k: os.environ.get(k) for k in ("MUJOCO_GL", "PYOPENGL_PLATFORM", "LIBERO_CONFIG_PATH")}
         sys.path.insert(0, str(PROJECT/"src"))
@@ -343,7 +397,7 @@ def main():
         run_robotwin_eval.ChatClient = vertex_client(run_robotwin_eval.ChatClient, credentials, args.tier)
     run_robotwin_eval.MLLMDiscreteAgent = functools.partial(
         relay.RelayAgent, variant=args.variant, checker=checker, max_steps=args.max_steps,
-        empty_grasp_limit=args.empty_grasp_limit, monitor=monitor)
+        empty_grasp_limit=args.empty_grasp_limit, monitor=monitor, release_gate=gate, task_note=args.task_note)
     Path(config["output"]).mkdir(parents=True, exist_ok=True)
     (Path(config["output"])/"relay_config.json").write_text(json.dumps(config, indent=2)+"\n")
     sys.argv = [str(args.repo/"harness/run_robotwin_eval.py"), *flags,

@@ -18,6 +18,11 @@ relayed step, counts as one turn against max_turns, so a variant never acts more
 could; what it saves is big-model calls. The big model's next reply lists every command that ran since
 its last reply and says how far the relay got and why it stopped.
 
+Two options for the toe study (reports/앞코_경고_라이브AB_설계.md), off by default: a release gate
+(branchlab.rtscene.release_gate) that, in the shoe tasks, looks at an open of an arm that holds something before
+it runs and may hold it back once per hold, reported to the big model as the open's result; and a task note, a
+sentence added to one task's instruction.
+
 Upstream code is imported, not modified. run_episode is upstream's loop (harness/agent/mllm_agent.py at
 the pinned commit) with the relay added; in the baseline variant it produces upstream's trace, memory and
 result (tests/test_robodawn_relay.py runs both on a scripted environment and compares them).
@@ -57,6 +62,9 @@ LOST_OPENING = 0.05          # prompts.state_text's threshold for a held object 
 PRESS_TASKS = {"click_bell", "click_alarmclock", "press_stapler", "turn_switch"}
 # tasks whose goal changes an object's pose on purpose: the object monitor would read success as a fall
 MONITOR_SKIP_TASKS = {"open_laptop", "adjust_bottle"}
+# --task-note: a sentence added to the instruction of one task (condition C of reports/앞코_경고_라이브AB_설계.md:
+# place_shoe's checker wants the toe at -x, which its instruction never says)
+TASK_NOTES = {"shoe-left": {"place_shoe": "The shoe counts as placed only with its toe pointing left (-x)."}}
 
 # Inserted into upstream's RESPONSE FORMAT block in place of its last line.
 FORMAT_LINE = '  "commands": ["<command>", ...]   // 1 to {n} commands, executed in order\n}}\n'
@@ -387,12 +395,16 @@ class RelayEpisodeResult(EpisodeResult):
     monitor_wait_seconds: float = 0.0  # time the episode waited for the monitor (its captures, and any check that
                                        # outlasted the model call)
     monitor_stop: dict = field(default_factory=dict)  # {turn, why} when the monitor ended the episode
+    gate_calls: int = 0           # opens of a holding arm the release gate looked at
+    gate_vetoes: int = 0          # opens it held back
+    gate_errors: int = 0          # calls that failed (the open ran unchecked)
+    gate_seconds: float = 0.0     # time of its renders, crops and Clef calls (the episode waits for them)
 
 
 class RelayAgent(MLLMDiscreteAgent):
     def __init__(self, cfg, client, out_dir=None, task=None, *, variant: str = "baseline",
                  checker: Optional[Checker] = None, max_steps: int = MAX_STEPS, empty_grasp_limit: int = 0,
-                 monitor=None):
+                 monitor=None, release_gate=None, task_note: Optional[str] = None):
         if variant not in VARIANTS:
             raise ValueError(f"unknown variant {variant!r}")
         if variant == "checked" and checker is None:
@@ -406,6 +418,14 @@ class RelayAgent(MLLMDiscreteAgent):
         # object monitor: a factory of branchlab.rtscene.monitor.ObjectMonitor (None: off)
         self.monitor_factory = monitor if task not in MONITOR_SKIP_TASKS else None
         self._monitor = None                  # the running episode's monitor, told about grasps by _execute
+        # release gate: a branchlab.rtscene.release_gate.ReleaseGate (None: off), in the shoe tasks only
+        self.release_gate = release_gate if release_gate is not None and release_gate.applies(task) else None
+        if task_note is not None and task_note not in TASK_NOTES:
+            raise ValueError(f"unknown task note {task_note!r}")
+        self.task_note = TASK_NOTES[task_note].get(task) if task_note else None
+        self._gate_spent: set = set()         # arms whose current hold the gate has vetoed once already
+        self._gate_entries: list[dict] = []   # gate calls of the segment being executed
+        self._turn, self._episode_dir = 0, None
 
     # ------------------------------------------------------------------
     def _execute(self, env, commands, grasp_facts) -> tuple[list[dict], bool, int]:
@@ -422,9 +442,18 @@ class RelayAgent(MLLMDiscreteAgent):
                              "must be opened at the end, or a second object/arm is still required. Keep acting."),
                 })
                 break
+            held = cmd.arm in grasp_facts
+            if self.release_gate is not None:
+                veto = self._release_check(env, cmd, grasp_facts)
+                if veto is not None:
+                    # neither the open nor the rest of the commands run; Gemini reads why in the results
+                    results.append(veto)
+                    break
             res = env.execute(cmd)
             results.append(res)
             _update_grasp_facts(grasp_facts, cmd, res)
+            if self.release_gate is not None and not held and cmd.arm in grasp_facts:
+                self._gate_spent.discard(cmd.arm)     # a new hold: its release is checked again
             if self._monitor is not None and cmd.kind == "gripper" and res.get("ok"):
                 self._note_gripper(cmd, res)
             if (not self.press_task and cmd.kind == "gripper" and cmd.value < 0.5 and res.get("ok")
@@ -433,6 +462,51 @@ class RelayAgent(MLLMDiscreteAgent):
             if env.success or env.budget_exhausted:
                 break
         return results, done, empty
+
+    def _release_check(self, env, cmd, grasp_facts) -> Optional[dict]:
+        """Before an open of an arm that holds something (not lost), once per hold: the gate's veto as the open's
+        result, or None to run the open. Every call goes to the turn's trace record."""
+        if (cmd.kind != "gripper" or cmd.value < 0.5 or cmd.arm not in grasp_facts or cmd.arm in self._gate_spent):
+            return None
+        t0 = time.time()
+        watchdog.beat(f"release gate {cmd.arm}")
+        tile, objects = None, None
+        try:
+            state = env.state()
+            if (state.get(cmd.arm) or {}).get("gripper_real", 0.0) <= LOST_OPENING:
+                return None                    # the object is already lost: nothing to release
+            objects = state.get("objects")     # for the analysis only (the toe's true direction); never shown
+            obs = env.observe() if self.release_gate.mode == "clef" else None
+            entry, tile = self.release_gate.check(cmd.arm, obs)
+        except Exception as exc:  # noqa: BLE001  (the gate must never end the episode)
+            entry = {"mode": self.release_gate.mode, "arm": cmd.arm, "vetoed": False, "note": None,
+                     "error": f"{type(exc).__name__}: {str(exc)[:200]}"}
+        entry = {"turn": self._turn, **entry, "seconds": round(time.time() - t0, 3)}
+        if entry["error"]:
+            logger.warning("release gate failed at turn %d (%s arm), the open runs: %s", self._turn, cmd.arm, entry["error"])
+        if tile is not None and self._episode_dir:
+            name = f"turn{self._turn:03d}_gate_{cmd.arm}.jpg"
+            try:
+                tile.save(self._episode_dir / name, quality=90)
+                entry["image"] = name
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("release gate: could not save the crop: %s", exc)
+        entry["objects"] = objects
+        self._gate_entries.append(entry)
+        if not entry["vetoed"]:
+            return None
+        self._gate_spent.add(cmd.arm)
+        return {"command": cmd.text(), "kind": cmd.kind, "arm": cmd.arm, "ok": False, "note": entry["note"]}
+
+    def _gate_record(self, record: dict, stats: dict) -> None:
+        """The gate calls of the segment just executed, into its trace record and the episode's counts."""
+        if not self._gate_entries:
+            return
+        record["gate"], self._gate_entries = self._gate_entries, []
+        stats["gate_calls"] += len(record["gate"])
+        stats["gate_vetoes"] += sum(1 for g in record["gate"] if g["vetoed"])
+        stats["gate_errors"] += sum(1 for g in record["gate"] if g["error"])
+        stats["gate_seconds"] += sum(g["seconds"] for g in record["gate"])
 
     def _note_gripper(self, cmd, res) -> None:
         """Tell the monitor where a close caught something, and where a gripper let go."""
@@ -511,6 +585,9 @@ class RelayAgent(MLLMDiscreteAgent):
                              history_turns=cfg.history_turns)
         sys_prompt = system_prompt(cfg.profile, cfg.max_commands_per_turn, cfg.memory_scratchpad,
                                    context=env.prompt_context())
+        if self.task_note:                   # RoboTwin instructions often lack a closing period; the note is its own sentence
+            instruction = instruction.rstrip()
+            instruction += (" " if instruction.endswith((".", "!", "?")) else ". ") + self.task_note
         if self.variant != "baseline":
             sys_prompt = relay_system_prompt(sys_prompt, cfg.max_commands_per_turn, self.max_steps, self.press_task)
         episode_dir = Path(episode_dir) if episode_dir else None
@@ -531,7 +608,9 @@ class RelayAgent(MLLMDiscreteAgent):
         stats = {"planned_steps": 0, "relayed_steps": 0, "checker_calls": 0, "checker_seconds": 0.0,
                  "checker_cost_usd": 0.0, "checker_input_tokens": 0, "checker_output_tokens": 0,
                  "empty_closes": 0, "relay_ends": {}, "monitor_bound": 0, "monitor_calls": 0, "monitor_seconds": 0.0,
-                 "monitor_wait_seconds": 0.0, "monitor_stop": {}}
+                 "monitor_wait_seconds": 0.0, "monitor_stop": {}, "gate_calls": 0, "gate_vetoes": 0, "gate_errors": 0,
+                 "gate_seconds": 0.0}
+        self._gate_spent, self._gate_entries, self._episode_dir = set(), [], episode_dir
         report = ""          # what the relay did since the big model's last reply, shown in its next turn
         monitor = self._monitor = self.monitor_factory() if self.monitor_factory else None
         monitor_log: list[dict] = []
@@ -620,7 +699,9 @@ class RelayAgent(MLLMDiscreteAgent):
                 record["monitor_bound"] = self._monitor_bind(monitor, first_capture, parsed, stats)
             commands = commands[: cfg.max_commands_per_turn]
             lost_before = lost_arms(grasp_facts, state)
+            self._turn = turn
             results, done, empty = self._execute(env, commands, grasp_facts)
+            self._gate_record(record, stats)
             stats["empty_closes"] += empty
             for err in errors:
                 results.append({"command": "(invalid)", "kind": "invalid", "arm": None, "ok": False, "note": err})
@@ -706,6 +787,7 @@ class RelayAgent(MLLMDiscreteAgent):
                     for view in views:
                         (episode_dir / f"turn{turn:03d}_{view.name}.png").write_bytes(encode_png(view.image))
                 prev_lost = lost_arms(grasp_facts, obs["state"])
+                self._turn = turn
                 results, _, empty = self._execute(env, step.commands, grasp_facts)
                 stats["empty_closes"] += empty
                 stats["relayed_steps"] += 1
@@ -714,6 +796,7 @@ class RelayAgent(MLLMDiscreteAgent):
                        "commands": [c.text() for c in step.commands],
                        "results": [{kk: v for kk, v in r.items() if kk not in ("before", "after")} for r in results],
                        "expect": step.expect, "checks": verdict and {"questions": prev_expect, "p_yes": verdict["p_yes"]}}
+                self._gate_record(rec, stats)
                 trace.append(rec)
                 memory.record_turn(f"{turn} (planned step {k}, run without asking you)", rec["commands"], results,
                                    env.state())
@@ -761,6 +844,7 @@ class RelayAgent(MLLMDiscreteAgent):
                 (episode_dir / "monitor.json").write_text(json.dumps(monitor_log, indent=1, default=_json_default))
         stats["monitor_seconds"] = round(stats["monitor_seconds"], 1)
         stats["monitor_wait_seconds"] = round(stats["monitor_wait_seconds"], 1)
+        stats["gate_seconds"] = round(stats["gate_seconds"], 1)
         result = RelayEpisodeResult(
             success=env.success, turns=turn, steps_used=env.steps_used, step_limit=env.step_limit,
             finished_reason=finished_reason, seconds=round(time.time() - t_start, 1), model_seconds=round(model_seconds, 1),

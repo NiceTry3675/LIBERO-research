@@ -143,6 +143,15 @@ HEADER = (f"{'run':30} {'success':>7} {'turns':>6} {'calls':>6} {'relay':>6} {'m
           f"{'wall s':>7} {'$gem':>7} {'$check':>7} {'checks':>6} {'mon':>6} {'mon s':>6} {'stops':>5}  relay ends")
 
 
+def default_reference(labels) -> str:
+    """The plain baseline: a baseline run without a monitor, a release gate or a task note, the one with the fewest
+    options first (gemini_flash_<tier> / relay_baseline_<tier> before relay_baseline_m16000_<tier>); any run if none."""
+    def rank(k):
+        return (not k.startswith(("gemini_flash_", "relay_baseline_")),
+                any(tag in k for tag in ("_mon", "_gate", "_note")), k.count("_"), k)
+    return min(labels, key=rank)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("tasks", nargs="*")
@@ -155,7 +164,7 @@ def main():
     parser.add_argument("--runs", type=Path, nargs="+",
                         default=[PROJECT / "outputs", *sorted((PROJECT / "outputs/robodawn_colab").glob("*"))])
     parser.add_argument("--labels", nargs="+", help="only these runs (directory names)")
-    parser.add_argument("--reference", help="run the others are compared with (default: the baseline)")
+    parser.add_argument("--reference", help="run the others are compared with (default: the plain baseline, see default_reference)")
     parser.add_argument("--empty-grasp-limit", type=int, nargs="*", default=[])
     parser.add_argument("--price-input", type=float, default=0.75)
     parser.add_argument("--price-cached", type=float, default=0.075)
@@ -177,8 +186,7 @@ def main():
           f"{len({t for t, _ in common})} tasks" + (f"; repeated copies ignored: {dict(repeated)}" if repeated else ""))
     if not common:
         return
-    reference = args.reference or next((k for k in sorted(runs) if k.startswith(("gemini_flash_", "relay_baseline_"))),
-                                       sorted(runs)[0])
+    reference = args.reference or default_reference(runs)
     print("\nper episode means; model s = big-model time, $gem / $check = cost per episode in USD")
     print(HEADER)
     for label in sorted(runs, key=lambda k: (k != reference, k)):

@@ -156,13 +156,14 @@ GRASP_AND_LIFT = [
 ]
 
 
-def run(agent_cls, replies, max_turns=45, env=None, tmp=None, **kwargs):
+def run(agent_cls, replies, max_turns=45, env=None, tmp=None, task=TASK, instruction="Put the cup on the coaster.",
+        **kwargs):
     cfg = AgentConfig(max_turns=max_turns)
     client = ScriptedClient(replies)
     env = env or FakeEnv()
     out = Path(tmp)
-    agent = agent_cls(cfg, client, out/"run", task=TASK, **kwargs)
-    result = agent.run_episode(env, "Put the cup on the coaster.", out/"run/episode_000")
+    agent = agent_cls(cfg, client, out/"run", task=task, **kwargs)
+    result = agent.run_episode(env, instruction, out/"run/episode_000")
     trace = json.loads((out/"run/episode_000/trace.json").read_text())
     memory = json.loads((out/"run/episode_000/memory.json").read_text())
     return result, trace, memory, client, env
@@ -430,6 +431,193 @@ class MonitorTests(unittest.TestCase):
         self.assertEqual((result.turns, result.monitor_bound), (3, 0))
 
 
+class ShoeEnv(FakeEnv):
+    """FakeEnv (the cup stands in for a shoe) with a 640x480 top camera looking straight down and its matrices."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.observed = 0
+
+    def observe(self):
+        self.observed += 1
+        obs = super().observe()
+        rng = np.random.default_rng(self._steps)
+        obs["images"]["top_camera"] = rng.integers(0, 255, (480, 640, 3), dtype=np.uint8)
+        R = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
+        E = np.hstack([R, (-R @ np.array([0.0, -0.10, 1.65]))[:, None]])
+        obs["camera_params"] = {"top_camera": {"intrinsic_cv": np.array([[514.68, 0, 320], [0, 514.68, 240], [0, 0, 1]]),
+                                               "extrinsic_cv": E}}
+        return obs
+
+
+class FakeClef:
+    """Clef's answers to the toe question, in order: (direction, p) gives the direction p and left the rest (or
+    left p and the rest spread evenly), or an error to raise."""
+
+    def __init__(self, *answers):
+        self.answers, self.asked = list(answers), []
+
+    def __call__(self, state, questions, images):
+        self.asked.append((state, questions, images))
+        answer = self.answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        direction, p = answer
+        probs = {k: 0.0 for k in ("left", "right", "up", "down")} | {"left": 1 - p, direction: p}
+        if direction == "left":
+            probs |= {k: (1 - p) / 3 for k in ("right", "up", "down")}
+        return {"toe": {"type": "choice", "probabilities": probs}}
+
+
+SHOE = "place_dual_shoes"
+REACH = reply(["right point down", "right move x -10", "right move y +10", "right move z -15"])    # to the cup, z 80
+HOLD_AND_OPEN = reply(["right gripper close", "right move z +5", "right gripper open", "right move z +5"])
+
+
+class ReleaseGateTests(unittest.TestCase):
+    def gate(self, mode="clef", *answers, threshold=0.8):
+        from branchlab.rtscene import release_gate
+        clef = FakeClef(*answers)
+        return release_gate.ReleaseGate(mode, clef if mode == "clef" else None, threshold), clef
+
+    def test_off_reproduces_upstream_in_a_shoe_task(self):
+        script = [REACH, HOLD_AND_OPEN, reply(["right gripper open"])]
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            up = run(MLLMDiscreteAgent, script, max_turns=3, tmp=a, task=SHOE, env=ShoeEnv())
+            ours = run(relay.RelayAgent, script, max_turns=3, tmp=b, task=SHOE, env=ShoeEnv(), variant="baseline")
+        self.assertEqual(up[1], ours[1])
+        self.assertEqual(up[3].prompts, ours[3].prompts)
+        self.assertEqual((ours[0].gate_calls, ours[4].observed), (0, 4))   # turn starts and the final views
+
+    def test_a_confident_wrong_toe_holds_the_open_back_once(self):
+        gate, clef = self.gate("clef", ("right", 0.9))
+        script = [REACH, HOLD_AND_OPEN, reply(["right gripper open", "right move z +5"])]
+        with tempfile.TemporaryDirectory() as tmp:
+            result, trace, memory, client, env = run(relay.RelayAgent, script, max_turns=3, tmp=tmp, task=SHOE,
+                                                     env=ShoeEnv(), variant="baseline", release_gate=gate)
+            crop = Image.open(Path(tmp)/"run/episode_000/turn002_gate_right.jpg")
+            self.assertEqual(crop.size, (256, 256))
+        self.assertEqual((result.gate_calls, result.gate_vetoes, result.gate_errors), (1, 1, 0))
+        self.assertEqual(len(clef.asked), 1)
+        state, questions, images = clef.asked[0]
+        self.assertEqual(questions["toe"]["instructions"],
+                         "Which way does the toe of the shoe held in the centre point, in the picture?")
+        self.assertEqual(sorted(questions["toe"]["criteria"]), ["down", "left", "right", "up"])
+        self.assertTrue(state.startswith("A robot is moving shoes on a table.") and len(images) == 1)
+        # the open and the move after it did not run; the result tells Gemini why
+        self.assertEqual([r["ok"] for r in trace[1]["results"]], [True, True, False])
+        self.assertIn('"right gripper open" NOT executed (release check): the fast checker sees the toe of the held '
+                      "shoe pointing RIGHT in the top camera", trace[1]["results"][2]["note"])
+        self.assertIn("NOT executed (release check)", client.prompts[2][2])
+        gated = trace[1]["gate"][0]
+        self.assertEqual((gated["turn"], gated["arm"], gated["mode"], gated["vetoed"], gated["seen"]),
+                         (2, "right", "clef", True, "right"))
+        self.assertAlmostEqual(gated["p_not_left"], 0.9)
+        self.assertEqual(gated["image"], "turn002_gate_right.jpg")
+        # the second open of the same hold runs unchecked
+        self.assertNotIn("gate", trace[2])
+        self.assertEqual(trace[2]["results"][0]["note"], "gripper opened")
+        self.assertEqual(env.arms["right"]["position_cm"][2], 90.0)
+
+    def test_a_new_hold_rearms_the_gate_and_a_reclose_does_not(self):
+        gate, clef = self.gate("clef", ("up", 0.95), ("down", 0.85))
+        script = [REACH,
+                  reply(["right gripper close", "right gripper open"]),       # vetoed
+                  reply(["right gripper close", "right gripper open"]),       # closes again on the same hold: runs
+                  reply(["right gripper close", "right gripper open"])]       # a new hold: vetoed again
+        with tempfile.TemporaryDirectory() as tmp:
+            result, trace, _, _, _ = run(relay.RelayAgent, script, max_turns=4, tmp=tmp, task=SHOE, env=ShoeEnv(),
+                                         variant="baseline", release_gate=gate)
+        self.assertEqual((result.gate_calls, result.gate_vetoes, len(clef.asked)), (2, 2, 2))
+        self.assertEqual([("gate" in t) for t in trace], [False, True, False, True])
+        self.assertIn("pointing away from the robot", trace[1]["results"][1]["note"])
+        self.assertIn("pointing toward the robot", trace[3]["results"][1]["note"])
+
+    def test_a_toe_seen_left_or_an_unsure_answer_lets_the_open_run(self):
+        for answer in (("left", 0.9), ("right", 0.75)):
+            gate, clef = self.gate("clef", answer)
+            with self.subTest(answer), tempfile.TemporaryDirectory() as tmp:
+                result, trace, _, _, env = run(relay.RelayAgent, [REACH, HOLD_AND_OPEN], max_turns=2, tmp=tmp,
+                                               task=SHOE, env=ShoeEnv(), variant="baseline", release_gate=gate)
+            self.assertEqual((result.gate_calls, result.gate_vetoes), (1, 0))
+            self.assertEqual([r["ok"] for r in trace[1]["results"]], [True] * 4)
+            self.assertFalse(trace[1]["gate"][0]["vetoed"])
+
+    def test_a_failing_gate_lets_the_open_run(self):
+        class NoCamera(ShoeEnv):
+            def observe(self):
+                obs = super().observe()
+                del obs["camera_params"]
+                return obs
+        for env, answers in ((ShoeEnv(), [RuntimeError("Clef HTTP 503")]), (NoCamera(), [("right", 0.99)])):
+            gate, clef = self.gate("clef", *answers)
+            with self.subTest(type(env).__name__), tempfile.TemporaryDirectory() as tmp:
+                result, trace, _, _, _ = run(relay.RelayAgent, [REACH, HOLD_AND_OPEN], max_turns=2, tmp=tmp,
+                                             task=SHOE, env=env, variant="baseline", release_gate=gate)
+            self.assertEqual((result.gate_calls, result.gate_vetoes, result.gate_errors), (1, 0, 1))
+            self.assertEqual([r["ok"] for r in trace[1]["results"]], [True] * 4)
+            self.assertTrue(trace[1]["gate"][0]["error"])
+
+    def test_a_lost_object_is_not_checked(self):
+        env = ShoeEnv()
+        env.drop_at_step = 6          # the cup slips during the lift
+        gate, clef = self.gate("clef", ("right", 0.99))
+        with tempfile.TemporaryDirectory() as tmp:
+            result, *_ = run(relay.RelayAgent, [REACH, HOLD_AND_OPEN], max_turns=2, tmp=tmp, task=SHOE, env=env,
+                             variant="baseline", release_gate=gate)
+        self.assertEqual((result.gate_calls, len(clef.asked)), (0, 0))
+
+    def test_other_tasks_are_never_gated(self):
+        gate, clef = self.gate("clef", ("right", 0.99))
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            base = run(relay.RelayAgent, [REACH, HOLD_AND_OPEN], max_turns=2, tmp=a, env=ShoeEnv(), variant="baseline")
+            gated = run(relay.RelayAgent, [REACH, HOLD_AND_OPEN], max_turns=2, tmp=b, env=ShoeEnv(), variant="baseline",
+                        release_gate=gate)
+        self.assertEqual(base[1], gated[1])
+        self.assertEqual((gated[0].gate_calls, len(clef.asked)), (0, 0))
+
+    def test_nudge_holds_back_once_without_clef_or_a_render(self):
+        gate, _ = self.gate("nudge")
+        script = [REACH, HOLD_AND_OPEN, reply(["right gripper open"])]
+        with tempfile.TemporaryDirectory() as tmp:
+            result, trace, _, _, env = run(relay.RelayAgent, script, max_turns=3, tmp=tmp, task="place_shoe",
+                                           env=ShoeEnv(), variant="baseline", release_gate=gate)
+            saved = sorted(p.name for p in (Path(tmp)/"run/episode_000").glob("*gate*"))
+        self.assertEqual((result.gate_calls, result.gate_vetoes, env.observed), (1, 1, 4))   # turn starts, final views
+        self.assertEqual(trace[1]["results"][2]["note"],
+                         '"right gripper open" NOT executed (release check): Before releasing, check in the images '
+                         "that the shoe's toe points the way the task asks; send the open again to release.")
+        self.assertEqual((trace[1]["gate"][0]["probabilities"], saved), (None, []))
+        self.assertEqual(trace[2]["results"][0]["note"], "gripper opened")
+
+    def test_a_veto_in_a_planned_step_stops_the_relay(self):
+        gate, _ = self.gate("nudge")
+        script = [reply(REACH["commands"], next_=[{"commands": ["right gripper close", "right gripper open"]},
+                                                  {"commands": ["right move z +5"]}])]
+        with tempfile.TemporaryDirectory() as tmp:
+            result, trace, _, client, _ = run(relay.RelayAgent, script, max_turns=3, tmp=tmp, task=SHOE, env=ShoeEnv(),
+                                              variant="open", release_gate=gate)
+        self.assertEqual((result.relayed_steps, result.relay_ends, result.gate_vetoes), (1, {"command_failed": 1}, 1))
+        self.assertEqual(trace[1]["gate"][0]["turn"], 2)
+
+    def test_task_note_only_for_place_shoe_and_only_when_asked(self):
+        note = "The shoe counts as placed only with its toe pointing left (-x)."
+        for task, task_note, shown in (("place_shoe", "shoe-left", True), ("place_shoe", None, False),
+                                       (SHOE, "shoe-left", False)):
+            with self.subTest(task=task, note=task_note), tempfile.TemporaryDirectory() as tmp:
+                _, _, _, client, _ = run(relay.RelayAgent, [reply(["wait"])], max_turns=1, tmp=tmp, task=task,
+                                         variant="baseline", task_note=task_note)
+            self.assertEqual(note in client.prompts[0][2], shown)
+            self.assertNotIn(note, client.prompts[0][1])                  # the system prompt is unchanged
+        for instruction in ("Drop the shoe on the mat", "Drop the shoe on the mat. "):   # RoboTwin often has no period
+            with self.subTest(instruction=instruction), tempfile.TemporaryDirectory() as tmp:
+                _, _, _, client, _ = run(relay.RelayAgent, [reply(["wait"])], max_turns=1, tmp=tmp, task="place_shoe",
+                                         variant="baseline", task_note="shoe-left", instruction=instruction)
+            self.assertIn("TASK: Drop the shoe on the mat. " + note + "\n", client.prompts[0][2])
+        with self.assertRaisesRegex(ValueError, "task note"):
+            relay.RelayAgent(AgentConfig(), ScriptedClient([]), None, task="place_shoe", task_note="shoe-right")
+
+
 class PlanParsingTests(unittest.TestCase):
     def test_plan_is_cut_at_the_first_unusable_step(self):
         good = {"commands": ["left move z -5"], "expect": ["a?", "", 3]}
@@ -566,6 +754,20 @@ class RunnerTests(unittest.TestCase):
         longer, flags = runner.configuration(self.args(max_tokens=16000, tier="standard"))
         self.assertIn("/relay_checked_clef_m16000_standard/", longer["output"])
         self.assertEqual((longer["max_tokens"], flags[flags.index("--max_tokens") + 1]), (16000, "16000"))
+        names = set()
+        for changes in ({}, dict(gate="clef"), dict(gate="clef", gate_threshold=0.9), dict(gate="nudge"),
+                        dict(task_note="shoe-left"), dict(gate="clef", task_note="shoe-left"),
+                        dict(gate="nudge", gate_threshold=0.9)):
+            cfg, flags = runner.configuration(self.args(variant="baseline", checker=None, tier="standard", **changes))
+            names.add(flags[flags.index("--label") + 1])
+            self.assertEqual(Path(cfg["output"]).parents[1].name, flags[flags.index("--label") + 1])
+            self.assertEqual(cfg["relay"].get("gate", {}).get("mode", "off"), changes.get("gate", "off"))
+            self.assertEqual(cfg["relay"].get("task_note"), changes.get("task_note"))
+        self.assertEqual(names, {"relay_baseline_standard", "relay_baseline_gateclef_standard",
+                                 "relay_baseline_gateclef0.9_standard", "relay_baseline_gatenudge_standard",
+                                 "relay_baseline_noteshoe-left_standard", "relay_baseline_gateclef_noteshoe-left_standard"})
+        with self.assertRaisesRegex(ValueError, "gate-threshold"):
+            runner.configuration(self.args(variant="baseline", checker=None, gate="clef", gate_threshold=1.5))
         ev, flags = runner.configuration(self.args(start_episode=0, variant="open", checker=None))
         self.assertTrue(ev["evaluation"])
         self.assertTrue(ev["output"].endswith("outputs/robodawn/relay_open_flex/place_empty_cup/shard_0"))
