@@ -20,6 +20,8 @@ Simulation, prompts, demo selection and episode termination remain upstream.
 from __future__ import annotations
 
 import argparse
+import atexit
+import hashlib
 import json
 import os
 import sys
@@ -32,6 +34,8 @@ from audit_robodawn import ENDPOINT, PROJECT, REASONING, ROBODAWN_COMMIT, ROBOTW
 
 MODEL = "google/gemini-3.8-flash"
 LOCATION = "global"
+API_ROOT = "https://aiplatform.googleapis.com/v1"
+CACHE_TTL_S = 3600      # prompt cache lifetime, renewed while in use (an episode on flex can outlast an hour)
 SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
 TEMPERATURE = "not sent (upstream 0; Gemini 3.8 Flash ignores temperature)"
 # Flex only: "shared" keeps the request off provisioned throughput, "flex" picks Flex PayGo.
@@ -43,7 +47,7 @@ TIERS = {"flex":{"headers":{"X-Vertex-AI-LLM-Request-Type":"shared","X-Vertex-AI
 
 
 def api_base(project: str) -> str:
-    return f"https://aiplatform.googleapis.com/v1/projects/{project}/locations/{LOCATION}"
+    return f"{API_ROOT}/projects/{project}/locations/{LOCATION}"
 
 
 def traffic_type(usage) -> str | None:
@@ -106,8 +110,43 @@ def from_native(out: dict) -> dict:
                  "extra_properties":{"google":{"traffic_type":usage.get("trafficType")}}}}
 
 
-def vertex_client(base, credentials_path: Path, tier: str = "flex"):
-    """Authenticate with a service account and record metadata; never log credentials."""
+def split_prefix(native: dict) -> tuple[dict,str] | None:
+    """A generateContent body's fixed part (the system instruction and every message before the last: within an
+    episode the harness repeats the system prompt, the demonstration and its acknowledgement unchanged and puts the
+    turn's images and history in the last message) and its hash; None with fewer than two messages."""
+    if len(native["contents"])<2:
+        return None
+    prefix = {"contents":native["contents"][:-1],
+              **({"systemInstruction":native["systemInstruction"]} if "systemInstruction" in native else {})}
+    return prefix,hashlib.sha256(json.dumps(prefix,sort_keys=True).encode()).hexdigest()[:16]
+
+
+def http_json(url: str, token: str, method: str = "GET", body: dict | None = None, headers: dict | None = None,
+              timeout: float = 300.0) -> tuple[int,dict | str]:
+    """(200, JSON) / (HTTP status, error text) / (0, error), like upstream _post."""
+    request = urllib.request.Request(url,data=json.dumps(body).encode() if body is not None else None,method=method,
+        headers={"Authorization":f"Bearer {token}","Content-Type":"application/json",**(headers or {})})
+    try:
+        with urllib.request.urlopen(request,timeout=timeout) as response:
+            raw = response.read()
+            return 200,json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as exc:
+        return exc.code,exc.read().decode(errors="replace")[:500]
+    except Exception as exc:  # noqa: BLE001  (timeouts, connection resets, bad JSON)
+        return 0,f"{type(exc).__name__}: {exc}"
+
+
+def vertex_client(base, credentials_path: Path, tier: str = "flex", prompt_cache: bool = False):
+    """Authenticate with a service account and record metadata; never log credentials.
+
+    prompt_cache puts each episode's fixed prefix (split_prefix) in a Vertex context cache and sends only the last
+    message with a reference to it, so the prefix is billed at the cached rate on every call instead of whenever
+    implicit caching happens to hit (it missed about 5,500 tokens per call in the baseline runs). The model reads
+    the same tokens in the same order. A cache is created when a new prefix appears, its lifetime is renewed while in
+    use and it is deleted when the prefix changes or the process ends. Should a cache fail (creation refused, expired,
+    or a cached request answered 400/404), that call and the rest of its prefix go out uncached as before.
+    prompt_cache.jsonl (next to transport.jsonl, which keeps one line per model call) records every cache operation
+    (cache_create / cache_delete / cache_refused) for the cost accounting (compare_relay.cache_overhead)."""
     from google.oauth2 import service_account
     from google.auth.transport.requests import Request
     credentials = service_account.Credentials.from_service_account_file(str(credentials_path),scopes=SCOPES)
@@ -122,18 +161,76 @@ def vertex_client(base, credentials_path: Path, tier: str = "flex"):
         def __init__(self,*args,**kwargs):
             kwargs["api_key"] = token()
             super().__init__(*args,**kwargs)
+            self.cache = None           # {"key", "name", "tokens", "created", "renewed"} of the live cache
+            self.cache_failed = set()   # prefixes that go out uncached
+            if prompt_cache:
+                atexit.register(self._drop_cache)
+
+        def _cache_log(self,entry):
+            if self.log_path:
+                self.log_path.parent.mkdir(parents=True,exist_ok=True)
+                with (self.log_path.parent/"prompt_cache.jsonl").open("a") as f:
+                    f.write(json.dumps({"time":time.strftime("%Y-%m-%d %H:%M:%S"),**entry})+"\n")
+
+        def _drop_cache(self):
+            if not self.cache:
+                return
+            cache,self.cache = self.cache,None
+            status,payload = http_json(f"{API_ROOT}/{cache['name']}",token(),"DELETE",timeout=60)
+            self._cache_log({"tag":"cache_delete","status":status,"key":cache["key"],"cache_tokens":cache["tokens"],
+                             "held_s":round(time.monotonic()-cache["created"],1),
+                             **({"error":str(payload)[:300]} if status!=200 else {})})
+
+        def _cached(self,native,model):
+            """The body with its prefix replaced by the live cache (creating or renewing it), or None (send uncached)."""
+            split = split_prefix(native) if prompt_cache else None
+            if split is None or split[1] in self.cache_failed:
+                return None
+            prefix,key = split
+            if self.cache and self.cache["key"]!=key:
+                self._drop_cache()
+            if not self.cache:
+                started = time.monotonic()
+                resource = self.base_url.split("/v1/",1)[1]
+                status,payload = http_json(f"{self.base_url}/cachedContents",self.api_key,"POST",
+                    {"model":f"{resource}/publishers/google/models/{model}",**prefix,"ttl":f"{CACHE_TTL_S}s"},
+                    timeout=self.timeout_s)
+                ok = status==200 and isinstance(payload,dict) and payload.get("name")
+                tokens = ((payload.get("usageMetadata") or {}).get("totalTokenCount") if ok else None)
+                self._cache_log({"tag":"cache_create","status":status,"key":key,"cache_tokens":tokens,
+                                 "seconds":round(time.monotonic()-started,3),**({} if ok else {"error":str(payload)[:300]})})
+                if not ok:
+                    if status not in (0,429) and status<500:    # refused; a busy or unreachable API is tried again
+                        self.cache_failed.add(key)
+                    return None
+                now = time.monotonic()
+                self.cache = {"key":key,"name":payload["name"],"tokens":tokens,"created":now,"renewed":now}
+            elif time.monotonic()-self.cache["renewed"]>CACHE_TTL_S/2:
+                status,_ = http_json(f"{API_ROOT}/{self.cache['name']}?updateMask=ttl",self.api_key,"PATCH",
+                                     {"ttl":f"{CACHE_TTL_S}s"},timeout=60)
+                if status==200:
+                    self.cache["renewed"] = time.monotonic()
+            rest = {k:v for k,v in native.items() if k not in ("systemInstruction","contents")}
+            return {"cachedContent":self.cache["name"],"contents":native["contents"][-1:],**rest}
 
         def _send(self,body):
             """Same contract as upstream _post: (200, payload) / (HTTP status, error text) / (0, error)."""
-            url = f"{self.base_url}/publishers/google/models/{body['model'].removeprefix('google/')}:generateContent"
-            request = urllib.request.Request(url,data=json.dumps(to_native(body)).encode(),method="POST",
-                headers={"Authorization":f"Bearer {self.api_key}","Content-Type":"application/json",**headers})
+            model = body['model'].removeprefix('google/')
+            url = f"{self.base_url}/publishers/google/models/{model}:generateContent"
+            native = to_native(body)
+            cached = self._cached(native,model)
+            status,payload = http_json(url,self.api_key,"POST",cached or native,headers,self.timeout_s)
+            if cached and status in (400,404):
+                # an expired or refused cache: this prefix goes out uncached from here on
+                self._cache_log({"tag":"cache_refused","status":status,"key":self.cache["key"],"error":str(payload)[:300]})
+                self.cache_failed.add(self.cache["key"])
+                self._drop_cache()
+                status,payload = http_json(url,self.api_key,"POST",native,headers,self.timeout_s)
+            if status!=200:
+                return status,payload
             try:
-                with urllib.request.urlopen(request,timeout=self.timeout_s) as response:
-                    return 200,from_native(json.load(response))
-            except urllib.error.HTTPError as exc:
-                return exc.code,exc.read().decode(errors="replace")[:500]
-            except Exception as exc:  # noqa: BLE001  (timeouts, connection resets, bad JSON)
+                return 200,from_native(payload)
+            except Exception as exc:  # noqa: BLE001  (a 200 that is not a generateContent reply)
                 return 0,f"{type(exc).__name__}: {exc}"
 
         def _post(self,body,tag=""):

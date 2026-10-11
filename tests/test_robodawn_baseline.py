@@ -67,8 +67,8 @@ class BaselineTests(unittest.TestCase):
             client = self.client(tier)
             response = MagicMock()
             response.__enter__.return_value = response
-            with patch("urllib.request.urlopen",return_value=response) as urlopen, \
-                 patch("json.load",return_value={"modelVersion":"gemini-3.8-flash","candidates":[]}):
+            response.read.return_value = json.dumps({"modelVersion":"gemini-3.8-flash","candidates":[]}).encode()
+            with patch("urllib.request.urlopen",return_value=response) as urlopen:
                 status,_ = client._send(client._body(self.MESSAGES))
             request = urlopen.call_args[0][0]
             self.assertEqual(status,200)

@@ -123,7 +123,7 @@ EOF
     background "cd $VM && $run --task adjust_bottle; $run --task place_empty_cup; echo SMOKE_DONE" /content/smoke_$tier.log
     ;;
   run)
-    tier=flex; args=("$@"); variant=; checker=; maxtok=; monitor=; gate=; gthr=; note=
+    tier=flex; args=("$@"); variant=; checker=; maxtok=; monitor=; gate=; gthr=; note=; pcache=
     for ((i = 0; i < ${#args[@]}; i++)); do
       case ${args[$i]} in
         --tier) tier=${args[$((i + 1))]} ;;
@@ -134,11 +134,12 @@ EOF
         --gate) gate=${args[$((i + 1))]} ;;
         --gate-threshold) gthr=${args[$((i + 1))]} ;;
         --task-note) note=${args[$((i + 1))]} ;;
+        --prompt-cache) pcache=_pc ;;
       esac
     done
     if [ -n "$variant" ]; then
       # relay runs check their own conditions per shard; one log per run, so runs can follow each other
-      name=relay_$variant${checker:+_$checker}${monitor:+_mon$monitor}${gate:+_gate$gate}${gthr:+$gthr}${note:+_note$note}${maxtok:+_m$maxtok}_$tier
+      name=relay_$variant${checker:+_$checker}${monitor:+_mon$monitor}${gate:+_gate$gate}${gthr:+$gthr}${note:+_note$note}$pcache${maxtok:+_m$maxtok}_$tier
       background "cd $VM && bash colab/robotwin/run_subset.sh $* --label $session" /content/subset_$name.log
       exit 0
     fi

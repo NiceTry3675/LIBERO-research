@@ -20,7 +20,8 @@ ended at its N-th empty close: that rule only stops episodes, so the run up to t
 Press tasks close on nothing on purpose; as in robodawn_relay.PRESS_TASKS, their closes do not count.
 
 Gemini prices are USD per 1M tokens for Gemini 3.8 Flash standard on Vertex as of 2026-10 (flex: half),
-as in compare_robodawn.py. Per episode, the cached share of the input is the run directory's. Clef's cost
+as in compare_robodawn.py. Per episode, the cached share of the input is the shard's. A shard run with
+--prompt-cache adds its caches' cost (cache_overhead) to its episodes in proportion to their model calls. Clef's cost
 is what OpenRouter reported (the object monitor's Workers AI calls: --price-clef-call each); the lite checker's needs --price-lite-input/--price-lite-output.
 """
 import argparse
@@ -32,6 +33,7 @@ from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parents[1]
 PRESS_TASKS = {"click_bell", "click_alarmclock", "press_stapler", "turn_switch"}   # = robodawn_relay.PRESS_TASKS
+CACHE_TTL_S = 3600      # = run_robodawn_baseline.CACHE_TTL_S
 
 
 def read_jsonl(path):
@@ -40,6 +42,21 @@ def read_jsonl(path):
 
 def empty_close(result):
     return result.get("kind") == "gripper" and str(result.get("note", "")).startswith("fingers closed fully")
+
+
+def cache_overhead(events, price_input, price_storage):
+    """USD of a shard's explicit prompt caches (prompt_cache.jsonl): creation billed as input tokens, storage per
+    token-hour until deletion (a cache whose deletion is missing or failed counts its full lifetime)."""
+    cost, live = 0.0, {}
+    for t in events:
+        if t.get("tag") == "cache_create" and t.get("status") == 200:
+            live[t.get("key")] = t.get("cache_tokens") or 0
+            cost += live[t.get("key")] * price_input
+        elif t.get("tag") == "cache_delete" and t.get("key") in live:
+            held = (t.get("held_s") or 0) if t.get("status") == 200 else CACHE_TTL_S
+            cost += live.pop(t["key"]) * price_storage * held / 3600
+    cost += sum(live.values()) * price_storage * CACHE_TTL_S / 3600
+    return cost / 1e6
 
 
 def sign_test(b, c):
@@ -75,10 +92,14 @@ def load(roots, dev, tasks, args):
                 prompt = sum(u.get("prompt_tokens", 0) for u in usage)
                 cached = sum((u.get("prompt_tokens_details") or {}).get("cached_tokens", 0) for u in usage)
                 share = cached / prompt if prompt else 0.0
+                episodes = json.loads((shard / "results.json").read_text())["episodes"]
+                overhead = cache_overhead(read_jsonl(shard / "prompt_cache.jsonl"), args.price_input,
+                                          args.price_cache_storage)
+                shard_calls = sum(e.get("model_calls") or 0 for e in episodes) or 1
                 calls = defaultdict(list)       # checker calls per episode (an aborted attempt's calls included)
                 for c in read_jsonl(shard / "checker_calls.jsonl"):
                     calls[c.get("episode")].append(c)
-                for e in json.loads((shard / "results.json").read_text())["episodes"]:
+                for e in episodes:
                     key = (task, e["episode_index"])
                     if key in runs[run_dir.name]:
                         repeated[run_dir.name] += 1
@@ -86,6 +107,7 @@ def load(roots, dev, tasks, args):
                     name = f"episode_{e['episode_index']:03d}"
                     gemini = scale * (e["prompt_tokens"] * ((1 - share) * args.price_input + share * args.price_cached)
                                       + e["completion_tokens"] * args.price_output) / 1e6
+                    gemini += overhead * (e.get("model_calls") or 0) / shard_calls
                     # Clef reports its cost; the lite checker's comes from its tokens (results.json: this attempt only)
                     lite = (calls[name][0].get("checker") == "lite") if calls[name] else False
                     checker = (e.get("checker_cost_usd") or 0.0) + (lite and (
@@ -169,6 +191,8 @@ def main():
     parser.add_argument("--price-input", type=float, default=0.75)
     parser.add_argument("--price-cached", type=float, default=0.075)
     parser.add_argument("--price-output", type=float, default=3.75)
+    parser.add_argument("--price-cache-storage", type=float, default=1.0,
+                        help="explicit prompt cache storage, USD per 1M token-hours (assumed: Gemini 2.5 Flash's)")
     parser.add_argument("--price-lite-input", type=float)
     parser.add_argument("--price-lite-output", type=float)
     parser.add_argument("--price-clef-call", type=float, default=0.00022,

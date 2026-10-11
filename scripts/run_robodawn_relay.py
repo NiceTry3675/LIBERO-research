@@ -29,7 +29,7 @@ episodes 12-23 for the subset tasks; episodes 24-49 are free of them).
         --start-episode 24 --episodes 5
 
 The result directory is relay_<variant>[_<checker>][_t<threshold>][_s<max steps>][_g<empty grasp
-limit>][_mon<monitor><need>][_gate<mode>[<threshold>]][_note<note>][_m<reply tokens>]_<tier>, the optional parts
+limit>][_mon<monitor><need>][_gate<mode>[<threshold>]][_note<note>][_pc][_m<reply tokens>]_<tier>, the optional parts
 only when they differ from the defaults, so runs with different settings never merge. --max-tokens raises the reply budget (default 8000, the baseline's):
 the relay prompt makes Gemini think longer, and a reply cut off by the budget loses its turn.
 
@@ -43,6 +43,10 @@ once per hold when P(not left) >= --gate-threshold (default 0.8); --gate nudge h
 reminder and no Clef call; --task-note shoe-left adds to place_shoe's instruction that the toe must point left.
 Both act in place_shoe and place_dual_shoes only (the note in place_shoe only). Use --dry-run to inspect the
 configuration without a GPU, key or model call.
+
+--prompt-cache (Vertex only) keeps each episode's fixed prompt prefix (system prompt and demonstration) in a Vertex
+context cache, so every call bills it at the cached rate; Gemini reads the same tokens (run_robodawn_baseline.vertex_client).
+Calls and successes compare with uncached runs as they are; costs differ by the cache's saving.
 """
 from __future__ import annotations
 
@@ -71,7 +75,8 @@ TASK_NOTES = ("shoe-left",)          # robodawn_relay.TASK_NOTES
 
 def run_name(variant: str, checker: str | None, tier: str, threshold: float = 0.5, max_steps: int = 3,
              empty_grasp_limit: int = 0, max_tokens: int = 8000, monitor: str = "off", monitor_need: int = 2,
-             gate: str = "off", gate_threshold: float = 0.8, task_note: str | None = None) -> str:
+             gate: str = "off", gate_threshold: float = 0.8, task_note: str | None = None,
+             prompt_cache: bool = False) -> str:
     return (f"relay_{variant}" + (f"_{checker}" if variant == "checked" else "")
             + (f"_t{threshold:g}" if variant == "checked" and threshold != DEFAULTS["threshold"] else "")
             + (f"_s{max_steps}" if max_steps != DEFAULTS["max_steps"] else "")
@@ -80,6 +85,7 @@ def run_name(variant: str, checker: str | None, tier: str, threshold: float = 0.
             + (f"_gate{gate}" if gate != "off" else "")
             + (f"{gate_threshold:g}" if gate == "clef" and gate_threshold != DEFAULTS["gate_threshold"] else "")
             + (f"_note{task_note}" if task_note else "")
+            + ("_pc" if prompt_cache else "")
             + (f"_m{max_tokens}" if max_tokens != DEFAULTS["max_tokens"] else "")
             + f"_{tier}")
 
@@ -141,13 +147,16 @@ def configuration(args) -> tuple[dict, list[str]]:
     monitor, need = getattr(args, "monitor", "off"), getattr(args, "monitor_need", 2)
     gate, gate_threshold = getattr(args, "gate", "off"), getattr(args, "gate_threshold", DEFAULTS["gate_threshold"])
     note = getattr(args, "task_note", None)
+    prompt_cache = getattr(args, "prompt_cache", False)
     if gate not in GATE_MODES or not 0.0 < gate_threshold <= 1.0:
         raise ValueError("--gate is off, clef or nudge, and --gate-threshold lies in (0, 1]")
     if note is not None and note not in TASK_NOTES:
         raise ValueError(f"--task-note is one of {', '.join(TASK_NOTES)}")
     name = run_name(args.variant, args.checker, "oauth" if oauth else args.tier, args.threshold, args.max_steps, args.empty_grasp_limit,
                     DEFAULTS["max_tokens"] if oauth and oauth["backend"] != "anthropic-oauth" else args.max_tokens, monitor, need,
-                    gate, gate_threshold, note)
+                    gate, gate_threshold, note, prompt_cache)
+    if oauth and prompt_cache:
+        raise ValueError("--prompt-cache applies to the Vertex backend only")
     if oauth:
         name += "_" + oauth["backend"] + "_" + oauth["model"] + "_" + (oauth["oauth"]["reasoning_effort"] or "default")
     output = (args.output.resolve() if args.output else
@@ -169,13 +178,15 @@ def configuration(args) -> tuple[dict, list[str]]:
               "max_turns": 45, "max_commands_per_turn": 4, "max_tokens": args.max_tokens,
               "task_config": "demo_randomized", "instruction_type": "unseen", "seed_base": 0,
               "cameras": ["agent_camera", "top_camera", "wrist"], "temperature": TEMPERATURE,
-              "relay": relay, "robotwin_root": str(args.robotwin_root.resolve())}
+              "relay": relay, "robotwin_root": str(args.robotwin_root.resolve()),
+              **({"prompt_cache": "explicit"} if prompt_cache else {})}
     config.update(oauth)
     config_path = output/"relay_config.json"
     if config_path.is_file():
         prior = json.loads(config_path.read_text())
         keys = ("robodawn_commit", "robotwin_commit", "task", "model", "endpoint", "tier", "reasoning", "max_turns",
-                "max_commands_per_turn", "max_tokens", "task_config", "instruction_type", "cameras", "relay", "backend", "oauth")
+                "max_commands_per_turn", "max_tokens", "task_config", "instruction_type", "cameras", "relay", "backend", "oauth",
+                "prompt_cache")
         if any(prior.get(k) != config.get(k) for k in keys):
             raise ValueError("Existing output uses different conditions; choose another output")
     elif (output/"results.json").exists():
@@ -354,6 +365,8 @@ def main():
     parser.add_argument("--task-note", choices=TASK_NOTES,
                         help="shoe-left: place_shoe's instruction adds that the toe must point left (-x)")
     parser.add_argument("--cloudflare-env", type=Path, default=Path("/content/.cloudflare_env"))
+    parser.add_argument("--prompt-cache", action="store_true",
+                        help="keep the fixed prompt prefix in a Vertex context cache (same tokens, cached rate)")
     parser.add_argument("--no-video", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -394,7 +407,8 @@ def main():
         run_robotwin_eval.ChatClient = oauth_client(run_robotwin_eval.ChatClient, args.backend,
                                                     args.oauth_credentials, args.reasoning_effort, args.max_tokens)
     else:
-        run_robotwin_eval.ChatClient = vertex_client(run_robotwin_eval.ChatClient, credentials, args.tier)
+        run_robotwin_eval.ChatClient = vertex_client(run_robotwin_eval.ChatClient, credentials, args.tier,
+                                                     prompt_cache=args.prompt_cache)
     run_robotwin_eval.MLLMDiscreteAgent = functools.partial(
         relay.RelayAgent, variant=args.variant, checker=checker, max_steps=args.max_steps,
         empty_grasp_limit=args.empty_grasp_limit, monitor=monitor, release_gate=gate, task_note=args.task_note)
