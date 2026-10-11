@@ -194,7 +194,7 @@ def main():
     args = parser.parse_args()
     items = load_items()
     print(f"{len(items)} steps before {len({i['id'].split('#')[0] for i in items})} demos' grasps")
-    clients = {"clef": Clef(cache_path=OUT / "responses_servo_clef.jsonl"),
+    clients = {"clef": Clef(cache_path=OUT / "responses_servo_clef.jsonl", backend="openrouter"),
                "vlm": VLM(cache_path=OUT / "responses_servo_vlm.jsonl")}
     jobs = []
     for model in args.models:

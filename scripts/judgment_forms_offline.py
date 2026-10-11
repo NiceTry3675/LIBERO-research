@@ -91,8 +91,8 @@ def jpeg_uri(path, size=None):
 
 def ask_all(jobs, workers):
     """jobs: (key, model, state, questions, images); returns {key: result or None}."""
-    # CLEF_BACKEND=workers: Cloudflare Workers AI directly (OpenRouter does not pass images to Clef), own cache
-    backend = os.environ.get("CLEF_BACKEND", "openrouter")
+    # Workers AI directly by default; CLEF_BACKEND=openrouter only reads the old cache (OpenRouter never passed images to Clef)
+    backend = os.environ.get("CLEF_BACKEND", "workers")
     clients = {"clef": Clef(cache_path=OUT / ("responses_judgment.jsonl" if backend == "openrouter"
                                               else f"responses_judgment_{backend}.jsonl"), backend=backend)}
     if any(j[1] == GEMINI for j in jobs):

@@ -372,7 +372,7 @@ def main():
     parser.add_argument("--limit", type=int, default=None, help="use only the first N turns")
     parser.add_argument("--models", nargs="*", default=["clef", "clef-flash"])
     parser.add_argument("--workers", type=int, default=6)
-    parser.add_argument("--backend", choices=["openrouter", "workers"], default="openrouter")
+    parser.add_argument("--backend", choices=["openrouter", "workers"], default="workers")
     parser.add_argument("--vlms", nargs="*", default=[],
                         help="OpenRouter VLM ids for tests A (abstract) and B; 'id@N' limits it to N turns")
     parser.add_argument("--think-vlms", nargs="*", default=[], help="VLMs run with reasoning on test B only")

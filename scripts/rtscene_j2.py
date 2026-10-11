@@ -240,7 +240,7 @@ def ask(models, arms, workers):
     from branchlab.clef import Clef
     from branchlab.vlm import VLM
     items = json.loads((OUT/"items.json").read_text())
-    clients = {"clef": Clef(cache_path=OUT/"responses_clef.jsonl"),
+    clients = {"clef": Clef(cache_path=OUT/"responses_clef.jsonl", backend="openrouter"),
                "clefw": Clef(cache_path=OUT/"responses_clefw.jsonl", backend="workers"),
                "lite": VLM(cache_path=OUT/"responses_lite.jsonl", backend="vertex"),
                "flash": VLM(cache_path=OUT/"responses_flash.jsonl", backend="vertex")}

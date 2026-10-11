@@ -282,7 +282,7 @@ def main():
     print(f"{len(items)} steps before {len({i['id'].split('#')[0] for i in items})} episodes' grasps")
     if args.limit:
         items = random.Random(0).sample(items, min(args.limit, len(items)))
-    clients = {"clef": Clef(cache_path=OUT / "responses_servo_topview.jsonl")}
+    clients = {"clef": Clef(cache_path=OUT / "responses_servo_topview.jsonl", backend="openrouter")}
     if any(c.startswith("gemini") for c in args.conditions):
         clients["vlm"] = VLM(cache_path=OUT / "responses_servo_topview_gemini.jsonl", backend="vertex")
     gemini_items = random.Random(1).sample(items, min(args.gemini_limit, len(items)))
