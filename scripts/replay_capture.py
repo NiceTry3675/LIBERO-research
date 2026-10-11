@@ -50,19 +50,23 @@ HALF = ("top_camera", "agent_camera")          # 640x480 cameras stored at every
 # ----------------------------------------------------------------------------- manifest (this machine)
 def runs_on_disk(root: Path) -> list[tuple[str, Path]]:
     """(run label, results.json) for the evaluation baseline and every development run fetched here."""
-    found = [("eval_baseline", p) for p in sorted(root.glob("*/robodawn/gemini_flash_flex/*/shard_*/results.json"))]
+    found = [("eval_baseline", p) for tier in ("flex", "standard")     # standard: the 8-task run of 2026-10-10
+             for p in sorted(root.glob(f"*/robodawn/gemini_flash_{tier}/*/shard_*/results.json"))]
     found += [(p.parts[-4], p) for p in sorted(root.glob("*/robodawn_dev/relay_*_m16000_standard/*/shard_*/results.json"))]
     return found
 
 
-def build_manifest(root: Path) -> list[dict]:
+def build_manifest(root: Path, tasks=None, exclude=None) -> list[dict]:
     episodes, seen = [], set()
+    skip = {e["key"] for e in json.loads(exclude.read_text())} if exclude else set()
     for run, results in runs_on_disk(root):
         task = results.parent.parent.name
+        if tasks and task not in tasks:
+            continue
         for e in json.loads(results.read_text())["episodes"]:
             key = f"{run}/{task}/{e['episode_index']}"
             trace_path = results.parent/f"episode_{e['episode_index']:03d}/trace.json"
-            if key in seen or not trace_path.is_file():
+            if key in seen or key in skip or not trace_path.is_file():
                 continue
             seen.add(key)
             trace = json.loads(trace_path.read_text())
@@ -253,6 +257,8 @@ def main():
     m = sub.add_parser("manifest")
     m.add_argument("--root", type=Path, default=PROJECT/"outputs/robodawn_colab")
     m.add_argument("--output", type=Path, default=MANIFEST)
+    m.add_argument("--tasks", nargs="+", help="only these tasks")
+    m.add_argument("--exclude", type=Path, help="leave out the episodes of this earlier manifest")
     r = sub.add_parser("replay")
     r.add_argument("--manifest", type=Path, default=MANIFEST)
     r.add_argument("--keys", nargs="+", required=True)
@@ -261,7 +267,7 @@ def main():
     r.add_argument("--robotwin-root", type=Path, default=Path(os.environ.get("ROBOTWIN_ROOT", "/content/RoboTwin")))
     args = parser.parse_args()
     if args.step == "manifest":
-        episodes = build_manifest(args.root)
+        episodes = build_manifest(args.root, args.tasks, args.exclude)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(episodes))
         by = {}

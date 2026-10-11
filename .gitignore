@@ -8,3 +8,4 @@ outputs/
 _archive/
 # Google service account key for Vertex BYOK; never commit
 gemini0614-499409-42e14e861064.json
+.DS_Store

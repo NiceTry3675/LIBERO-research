@@ -16,12 +16,13 @@ def main():
     paths = [*sorted((ROOT/"colab/robotwin").glob("*.sh")),ROOT/"colab/robotwin/README.md",
              ROOT/"colab/robotwin/reproduce_robodawn.ipynb",
              *[ROOT/"scripts"/name for name in ["audit_robodawn.py","run_robodawn_baseline.py","compare_robodawn.py",
-                                       "robodawn_relay.py","run_robodawn_relay.py","compare_relay.py","replay_capture.py"]],
+                                       "robodawn_relay.py","run_robodawn_relay.py","compare_relay.py","replay_capture.py",
+                                       "oauth_experiments.py","oauth_model.py"]],   # run_robodawn_relay imports oauth_experiments
              *[ROOT/"robodawn_site"/name for name in ["tasks.csv","episodes.csv","collection_report.json",
                  "harness_audit.json","reproduction_manifest.json","openrouter_model.json"]],
              *sorted((ROOT/"robodawn_site/inspect").glob("*.md")),
              # the scene parser and Clef client for the object monitor (imported from src/ on the VM)
-             *[ROOT/"src/branchlab"/name for name in ["__init__.py","clef.py"]],
+             *[ROOT/"src/branchlab"/name for name in ["__init__.py","clef.py","oauth.py"]],
              *sorted((ROOT/"src/branchlab/rtscene").glob("*.py")),ROOT/"src/branchlab/rtscene/robot_boxes.json",
              # recorded episodes to replay (scripts/replay_capture.py manifest), when built
              *[p for p in [ROOT/"outputs/replay/manifest.json"] if p.is_file()]]
