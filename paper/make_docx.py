@@ -23,7 +23,7 @@ PAGE_W, MARGIN_LR, COL_GAP = 210, 14, 6
 TEXT_W = PAGE_W - 2 * MARGIN_LR
 COL_W = (TEXT_W - COL_GAP) / 2
 PT_PER_MM = 72 / 25.4
-DOCX_TABLE_WIDTHS = [18, 28, 12, 42]  # percent of the column, table 1
+DOCX_TABLE_WIDTHS = [14, 23, 13, 32, 18]  # percent of the column, table 1
 PPR_AFTER_WORDWRAP = ("w:overflowPunct", "w:topLinePunct", "w:autoSpaceDE", "w:autoSpaceDN", "w:bidi",
                       "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing",
                       "w:mirrorIndents", "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment",

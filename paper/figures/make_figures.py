@@ -308,15 +308,15 @@ def fig3_compact():
     The marked crop is scripts/claw_marked_offline.marked_crop of eval_baseline/scan_object/0/left/c3; its answer
     (right 0.88, scored good) is in outputs/analysis/claw_marked/clef.jsonl."""
     groups = [("(a)", "정렬 (6.9 cm)", [
-                  (SRC / "claw_sent_off_target_6p9cm.png", ["목표 표시 없음", "그대로 0.50"]),
-                  (SRC / "claw_marked_off_target_6p9cm.png", ["목표 표시", "오른쪽 0.88"]),
+                  (SRC / "claw_sent_off_target_6p9cm.png", ["목표 표시 없음", "그대로 0.50 ×"]),
+                  (SRC / "claw_marked_off_target_6p9cm.png", ["목표 표시", "오른쪽 0.88 ○"]),
               ]),
               # place_shoe episode 1, the same shoe: its release moment (clef_vantage P0, toe hidden, answer
               # right 0.62, truth left) and its arm-clear pre-grasp crop placed from the depth blob
               # (toe_armclear eval_baseline/place_shoe/1|c000|shoe, TOP, answer left 0.86, truth left)
               ("(b)", "앞코 방향 (같은 신발)", [
-                  (SRC / "toe_release_hidden_shoe1.jpg", ["놓는 순간", "오른쪽 0.62"]),
-                  (SRC / "toe_armclear_pre_shoe1.png", ["잡기 전", "왼쪽 0.86"]),
+                  (SRC / "toe_release_hidden_shoe1.jpg", ["놓는 순간", "오른쪽 0.62 ×"]),
+                  (SRC / "toe_armclear_pre_shoe1.png", ["잡기 전", "왼쪽 0.86 ○"]),
               ])]
     fl, ft, fs = font(31, "bold"), font(30, "regular"), font(29, "regular")
     W, m, ggap, tgap, head, line = 1004, 8, 22, 8, 46, 36
